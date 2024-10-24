@@ -4,11 +4,11 @@ const ctx = canvas.getContext('2d');
 // Game Variables
 let player;
 let platforms = [];
-let colliders = [];
 let lavaY;
 let spawn = { x: 50, y: 220 }; // Default spawn point
-let camera = { x: 0, y: 0 }; // Camera position
 let levelWidth; // Set based on loaded level
+let levelHeight; // Set based on loaded level
+let camera; // Declare camera variable
 
 // Key status
 const keys = {};
@@ -56,7 +56,7 @@ class Player {
 
         // Draw player
         ctx.fillStyle = '#FF0000'; // Player color
-        ctx.fillRect(this.x - camera.x, this.y, this.width, this.height); // Draw player considering camera offset
+        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
     }
 
     checkCollision(platform) {
@@ -92,11 +92,7 @@ class Collider {
         this.height = height;
     }
 
-    draw(cameraOffsetX) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Collider color
-        ctx.fillRect(this.x - cameraOffsetX, this.y, this.width, this.height); // Draw collider with camera offset
-    }
-
+    // No drawing of colliders
     checkCollision(player) {
         return (
             player.x < this.x + this.width &&
@@ -109,10 +105,36 @@ class Collider {
 
 // Platform Class (inherits from Collider)
 class Platform extends Collider {
-    draw(cameraOffsetX) {
-        ctx.fillStyle = '#0000FF'; // Platform color
-        ctx.fillRect(this.x - cameraOffsetX, this.y, this.width, this.height); // Draw platform with camera offset
-        super.draw(cameraOffsetX); // Draw collider for debugging
+    constructor(x, y, width, height, tileSrc, tileSize) {
+        // Check if width is divisible by tileSize, if not adjust
+        const remainder = width % tileSize;
+        const adjustedWidth = remainder === 0 ? width : width + (tileSize - remainder); // Adjust width to be divisible by tileSize
+
+        super(x, y, adjustedWidth, height); // Set collider width to adjustedWidth
+        this.tile = new Image(); // Create a new Image object for the tile
+        this.tile.src = tileSrc; // Load the tile texture
+        this.tileSize = tileSize; // Size of each tile (assuming square tiles)
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        const numTiles = Math.ceil(this.width / this.tileSize); // Number of tiles needed for the platform
+        for (let i = 0; i < numTiles; i++) {
+            ctx.drawImage(this.tile, this.x - cameraOffsetX + i * this.tileSize, this.y - cameraOffsetY, this.tileSize, this.tileSize);
+        }
+    }
+}
+
+// Camera Class
+class Camera {
+    constructor() {
+        this.x = 0;
+        this.y = 0;
+    }
+
+    update(player, canvasWidth, canvasHeight) {
+        // Center camera on player both horizontally and vertically
+        this.x = player.x - canvasWidth / 2 + player.width / 2;
+        this.y = player.y - canvasHeight / 2 + player.height / 2; // Center camera vertically on player
     }
 }
 
@@ -125,10 +147,10 @@ async function loadLevel(level) {
     player = new Player(spawn.x, spawn.y); // Create player with spawn point
     lavaY = canvas.height - 30; // Set lava height
     levelWidth = data.width || 2000; // Set level width, or default to 2000
+    levelHeight = data.height || 1000; // Set level height, or default to 1000
 
-    // Create platforms and colliders
-    platforms = data.platforms.map(p => new Platform(p.x, p.y, p.width, p.height));
-    colliders = platforms; // In this case, colliders are the platforms
+    // Create platforms with textures
+    platforms = data.platforms.map(p => new Platform(p.x, p.y, p.width, p.height, p.tileSrc, 48));
 }
 
 // Move Player
@@ -145,16 +167,6 @@ function movePlayer() {
     player.x = Math.min(levelWidth - player.width, player.x); // Keep player within level bounds
 }
 
-// Update Camera
-function updateCamera() {
-    // Center camera on player
-    camera.x = player.x - canvas.width / 2 + player.width / 2;
-
-    // Keep camera within level bounds
-    camera.x = Math.max(0, camera.x);
-    camera.x = Math.min(levelWidth - canvas.width, camera.x);
-}
-
 // Update Game State
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -163,24 +175,28 @@ function update() {
     movePlayer();
 
     // Update camera based on player position
-    updateCamera();
+    camera.update(player, canvas.width, canvas.height);
 
-    // Draw platforms and colliders
+    // Draw platforms
     for (let platform of platforms) {
-        platform.draw(camera.x); // Draw platforms with camera offset
+        // Only draw if within visible bounds (for optimization)
+        if (platform.y + platform.height > camera.y && platform.y < camera.y + canvas.height &&
+            platform.x + platform.width > camera.x && platform.x < camera.x + canvas.width) {
+            platform.draw(camera.x, camera.y); // Draw platforms with camera offset
+        }
     }
 
-    // Update and draw player
+    // Update player and draw
     player.update();
 
     // Draw lava
     if (lavaY > 0 && lavaY < canvas.height) {
         ctx.fillStyle = '#FF4500'; // Lava color
-        ctx.fillRect(0, lavaY, canvas.width, canvas.height - lavaY);
+        ctx.fillRect(0, lavaY - camera.y, canvas.width, canvas.height - (lavaY - camera.y));
     }
 }
 
-// Handle Key Inputs
+// Capture Key Inputs
 window.addEventListener('keydown', (e) => {
     keys[e.code] = true; // Key pressed
     if (e.code === 'Space') {
@@ -194,6 +210,7 @@ window.addEventListener('keyup', (e) => {
 
 // Initialize Game
 async function init() {
+    camera = new Camera(); // Create camera instance
     await loadLevel('level1'); // Load the level
     setInterval(update, 1000 / 60); // 60 FPS
 }

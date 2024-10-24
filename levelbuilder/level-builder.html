@@ -37,6 +37,7 @@
         <input type="number" id="spawnY" value="220">
         <button id="addPlatform">Plattform hinzufügen</button>
         <button id="exportJSON">Exportiere JSON</button>
+        <input type="file" id="importJSON" accept=".json">
     </div>
     <canvas id="levelCanvas" width="1000" height="400"></canvas>
     <div id="propertyWindow">
@@ -65,8 +66,14 @@
         let selectedPlatform = null;
         let isDragging = false;
 
+        let camera = { x: 0, y: 0, zoom: 1 }; // Kamera für Panning und Zoom
+
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(camera.x, camera.y); // Panning
+            ctx.scale(camera.zoom, camera.zoom); // Zoom
+
             ctx.fillStyle = '#FF4500'; // Lava zeichnen
             ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
             ctx.fillStyle = '#0000FF'; // Plattformfarbe
@@ -75,6 +82,8 @@
             }
             ctx.fillStyle = '#00FF00'; // Spawnpunkt zeichnen
             ctx.fillRect(spawn.x, spawn.y, 10, 10);
+
+            ctx.restore();
         }
 
         function updatePropertyWindow(platform) {
@@ -87,8 +96,8 @@
         }
 
         canvas.addEventListener('mousedown', (e) => {
-            const mouseX = e.offsetX;
-            const mouseY = e.offsetY;
+            const mouseX = (e.offsetX - camera.x) / camera.zoom;
+            const mouseY = (e.offsetY - camera.y) / camera.zoom;
 
             for (let platform of platforms) {
                 if (
@@ -110,8 +119,8 @@
 
         canvas.addEventListener('mousemove', (e) => {
             if (isDragging && selectedPlatform) {
-                const mouseX = e.offsetX;
-                const mouseY = e.offsetY;
+                const mouseX = (e.offsetX - camera.x) / camera.zoom;
+                const mouseY = (e.offsetY - camera.y) / camera.zoom;
 
                 selectedPlatform.x = mouseX - selectedPlatform.width / 2;
                 selectedPlatform.y = mouseY - selectedPlatform.height / 2;
@@ -164,7 +173,6 @@
                 platforms: platforms
             };
             const json = JSON.stringify(levelData, null, 2);
-            console.log(json);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -172,6 +180,18 @@
             a.download = 'level.json';
             a.click();
             URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('importJSON').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const levelData = JSON.parse(event.target.result);
+                spawn = levelData.spawn;
+                platforms = levelData.platforms;
+                draw();
+            };
+            reader.readAsText(file);
         });
 
         document.getElementById('spawnX').addEventListener('input', (e) => {
@@ -193,6 +213,41 @@
             const newPlatform = { x, y, width, height };
             platforms.push(newPlatform);
             draw();
+        });
+
+        // Zoom und Panning-Logik
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = 0.1;
+            if (e.deltaY < 0) {
+                camera.zoom = Math.min(camera.zoom + zoomFactor, 5); // Maximal zoom 5x
+            } else {
+                camera.zoom = Math.max(camera.zoom - zoomFactor, 0.5); // Minimal zoom 0.5x
+            }
+            draw();
+        });
+
+        let isPanning = false;
+        let startX, startY;
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { // Mittlere Maustaste für Panning
+                isPanning = true;
+                startX = e.offsetX - camera.x;
+                startY = e.offsetY - camera.y;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                camera.x = e.offsetX - startX;
+                camera.y = e.offsetY - startY;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isPanning = false;
         });
 
         draw();
