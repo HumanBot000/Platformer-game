@@ -28,50 +28,50 @@ class Player {
     }
 
     update() {
-        // Collision with the lava
-        if (this.y + this.height >= lavaY) {
-            this.reset();
-        }
-    
-        this.dy += this.gravity; // Apply gravity
-        this.y += this.dy; // Update player position
-    
-        // Reset grounded status
-        this.grounded = false;
-        this.currentPlatform = null; // Reset current platform
-    
-        for (let platform of platforms) {
-            if (this.checkCollision(platform)) {
-                // Check if the player falls onto the platform
-                if (this.dy > 0 && this.y + this.height <= platform.y + this.dy) {
-                    this.y = platform.y - this.height; // Set player on platform
-                    this.dy = 0; // Reset vertical speed
-                    this.grounded = true; // Player is now on the ground
-                    this.currentPlatform = platform; // Set current platform
-                } else if (this.dy < 0) {
-                    // Player jumps and hits the platform from below
-                    this.y = platform.y + platform.height; // Set player above platform
-                    this.dy = 0; // Reset vertical speed
-                }
-    
-                // Adjust player's horizontal position based on platform movement
-                if (this.grounded && this.currentPlatform.type === "moving") {
-                    // Move player with platform based on its direction
-                    if (this.currentPlatform.movingForward) {
-                        this.x += this.currentPlatform.speed; // Moving right
-                    } else {
-                        this.x -= this.currentPlatform.speed; // Moving left
-                    }
-                }
-                break; // Exit loop if collision is detected
-            }
-        }
-    
-        // Draw player
-        ctx.fillStyle = '#FF0000'; // Player color
-        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
+    // Collision with the lava
+    if (this.y + this.height >= lavaY) {
+        this.reset();
     }
-    
+
+    this.dy += this.gravity; // Apply gravity
+    this.y += this.dy; // Update player position
+
+    // Reset grounded status
+    this.grounded = false;
+    this.currentPlatform = null; // Reset current platform
+
+    for (let platform of platforms) {
+        if (this.checkCollision(platform)) {
+            // Check if the player falls onto the platform
+            if (this.dy > 0 && this.y + this.height <= platform.y + this.dy) {
+                this.y = platform.y - this.height; // Set player on platform
+                this.dy = 0; // Reset vertical speed
+                this.grounded = true; // Player is now on the ground
+                this.currentPlatform = platform; // Set current platform
+            } else if (this.dy < 0) {
+                // Player jumps and hits the platform from below
+                this.y = platform.y + platform.height; // Set player above platform
+                this.dy = 0; // Reset vertical speed
+            }
+
+            // Adjust player's horizontal position based on platform movement
+            if (this.grounded && this.currentPlatform.type === "moving") {
+                // Move player with platform based on its direction
+                if (this.currentPlatform.movingForward) {
+                    this.x += this.currentPlatform.speed; // Moving right
+                } else {
+                    this.x -= this.currentPlatform.speed; // Moving left
+                }
+            }
+            break; // Exit loop if collision is detected
+        }
+    }
+
+    // Draw player
+    ctx.fillStyle = '#FF0000'; // Player color
+    ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
+}
+
     
 
     checkCollision(platform) {
