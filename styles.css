@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #87CEEB;
+}
+
+canvas {
+    border: 1px solid #000; /* Rahmen um das Canvas */
+    background: #87CEEB; /* Hintergrundfarbe */
+}
