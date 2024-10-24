@@ -3,7 +3,7 @@
     "width": 2000,
     "height": 1000,
     "platforms": [
-        { "x": 0, "y": 300, "width":1000, "height": 50, "tileSrc": "textures/grass.png" },
+        { "x": 0, "y": 300, "width":100, "height": 50, "tileSrc": "textures/grass.png" },
         {
             "x": 400,
             "y": 240,
@@ -14,8 +14,8 @@
             "speed": 2,
             "direction": "horizontal",
             "range": {
-                "start": 300,
-                "end": 1000
+                "start": 100,
+                "end": 400
             }
         }
     ]
