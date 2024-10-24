@@ -15,7 +15,7 @@
             "direction": "horizontal",
             "range": {
                 "start": 300,
-                "end": 10000
+                "end": 1000
             }
         }
     ]

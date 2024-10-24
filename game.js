@@ -13,85 +13,123 @@ let camera; // Declare camera variable
 
 // Key status
 const keys = {};
+
 class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 30;
-        this.height = 30;
-        this.speed = 5;
-        this.dy = 0;
+        this.width = 30; // Player width
+        this.height = 30; // Player height
+        this.speed = 5; // Player speed
+        this.dy = 0; // Vertical speed
         this.gravity = 0.5; // Gravity
-        this.jumpStrength = -12;
-        this.grounded = false;
-        this.currentPlatform = null; // Keep track of the current platform
+        this.jumpStrength = -12; // Jump strength
+        this.grounded = false; // Is the player grounded?
     }
 
     update() {
-    // Collision with the lava
-    if (this.y + this.height >= lavaY) {
-        this.reset();
-    }
-
-    this.dy += this.gravity; // Apply gravity
-    this.y += this.dy; // Update player position
-
-    // Reset grounded status
-    this.grounded = false;
-    this.currentPlatform = null; // Reset current platform
-
-    for (let platform of platforms) {
-        if (this.checkCollision(platform)) {
-            // Check if the player falls onto the platform
-            if (this.dy > 0 && this.y + this.height <= platform.y + this.dy) {
-                this.y = platform.y - this.height; // Set player on platform
-                this.dy = 0; // Reset vertical speed
-                this.grounded = true; // Player is now on the ground
-                this.currentPlatform = platform; // Set current platform
-            } else if (this.dy < 0) {
-                // Player jumps and hits the platform from below
-                this.y = platform.y + platform.height; // Set player above platform
-                this.dy = 0; // Reset vertical speed
-            }
-
-            // Adjust player's horizontal position based on platform movement
-            if (this.grounded && this.currentPlatform.type === "moving") {
-                // Move player with platform based on its direction
-                if (this.currentPlatform.movingForward) {
-                    this.x += this.currentPlatform.speed; // Moving right
+        // Collision detection variables
+        const playerTop = this.y;
+        const playerBottom = this.y + this.height;
+        const playerLeft = this.x;
+        const playerRight = this.x + this.width;
+    
+        // Reset grounded status
+        this.grounded = false;
+    
+        // Apply gravity
+        this.dy += this.gravity; // Apply gravity
+        this.y += this.dy; // Update player vertical position
+    
+        // Collision with lava
+        if (this.y + this.height >= lavaY) {
+            this.reset(); // Reset if the player hits lava
+        }
+    
+        for (let platform of platforms) {
+            if (this.checkCollision(platform)) {
+                // Handle vertical collisions
+                if (this.dy > 0 && playerBottom <= platform.y + this.dy) {
+                    // Colliding from above
+                    this.y = platform.y - this.height; // Place player on top of the platform
+                    this.dy = 0; // Reset vertical speed
+                    this.grounded = true; // Player is now grounded
+                } else if (this.dy < 0 && playerBottom >= platform.y) {
+                    // Colliding from below
+                    this.y = platform.y + platform.height; // Move player above the platform
+                    this.dy = 0; // Reset vertical speed
                 } else {
-                    this.x -= this.currentPlatform.speed; // Moving left
+                    // Handle horizontal collisions
+                    const platformTop = platform.y;
+                    const platformBottom = platform.y + platform.height;
+                    const platformLeft = platform.x;
+                    const platformRight = platform.x + platform.width;
+    
+                    const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
+                    const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
+    
+                    // Allow a slight buffer for horizontal collisions
+                    const horizontalBuffer = 5; // Change this value as needed
+                    const isNearLeft = playerRight > platformLeft - horizontalBuffer && playerLeft < platformLeft;
+                    const isNearRight = playerLeft < platformRight + horizontalBuffer && playerRight > platformRight;
+    
+                    if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
+                        this.x = platformLeft - this.width; // Move player to the left of the platform
+                        if (platform.type === "moving") {
+                            this.x -= platform.speed; // Move with the platform
+                        }
+                    } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
+                        this.x = platformRight; // Move player to the right of the platform
+                        if (platform.type === "moving") {
+                            this.x += platform.speed; // Move with the platform
+                        }
+                    }
                 }
             }
-            break; // Exit loop if collision is detected
-        }
+    
+        // Draw player
+        ctx.fillStyle = '#FF0000'; // Player color
+        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
     }
-
-    // Draw player
-    ctx.fillStyle = '#FF0000'; // Player color
-    ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
-}
-
+    
+        // Draw player
+        ctx.fillStyle = '#FF0000'; // Player color
+        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
+    }
     
 
     checkCollision(platform) {
-        const isCollidingFromAbove = this.x < platform.x + platform.width &&
-                                      this.x + this.width > platform.x &&
-                                      this.y + this.height <= platform.y + this.dy &&
-                                      this.y + this.height >= platform.y;
-        
-        const isCollidingFromBelow = this.x < platform.x + platform.width &&
-                                      this.x + this.width > platform.x &&
-                                      this.y >= platform.y + platform.height &&
-                                      this.y <= platform.y + platform.height + this.dy;
+        const playerTop = this.y;
+        const playerBottom = this.y + this.height;
+        const playerLeft = this.x;
+        const playerRight = this.x + this.width;
     
-        const isCollidingFromSides = this.x < platform.x + platform.width &&
-                                      this.x + this.width > platform.x &&
-                                      this.y < platform.y + platform.height &&
-                                      this.y + this.height > platform.y;
+        const platformTop = platform.y;
+        const platformBottom = platform.y + platform.height;
+        const platformLeft = platform.x;
+        const platformRight = platform.x + platform.width;
     
-        return isCollidingFromAbove || isCollidingFromBelow || isCollidingFromSides;
+        const isCollidingFromAbove = playerBottom >= platformTop && playerTop < platformTop && playerRight > platformLeft && playerLeft < platformRight;
+        const isCollidingFromBelow = playerTop <= platformBottom && playerBottom > platformBottom && playerRight > platformLeft && playerLeft < platformRight;
+    
+        const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
+        const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
+    
+        // Allow a slight buffer for horizontal collisions
+        const horizontalBuffer = 5; // Change this value as needed
+        const isNearLeft = playerRight > platformLeft - horizontalBuffer && playerLeft < platformLeft;
+        const isNearRight = playerLeft < platformRight + horizontalBuffer && playerRight > platformRight;
+    
+        return (
+            isCollidingFromAbove || 
+            isCollidingFromBelow || 
+            (isCollidingFromLeft && isNearLeft) || 
+            (isCollidingFromRight && isNearRight)
+        );
     }
+    
+    
+    
     
 
     jump() {
@@ -180,7 +218,6 @@ class Platform extends Collider {
             }
         }
     }
-    
 }
 
 // Camera Class
@@ -284,6 +321,7 @@ window.addEventListener('keyup', (e) => {
 async function init() {
     camera = new Camera(); // Create camera instance
     await loadLevel('level1'); // Load the level
+    update();
     setInterval(update, 1000 / 60); // 60 FPS
 }
 
