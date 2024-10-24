@@ -4,6 +4,7 @@ const ctx = canvas.getContext('2d');
 // Game Variables
 let player;
 let platforms = [];
+let colliders = [];
 let lavaY;
 let spawn = { x: 50, y: 220 }; // Default spawn point
 let levelWidth; // Set based on loaded level
@@ -12,8 +13,6 @@ let camera; // Declare camera variable
 
 // Key status
 const keys = {};
-
-// Player Class
 class Player {
     constructor(x, y) {
         this.x = x;
@@ -25,6 +24,7 @@ class Player {
         this.gravity = 0.5; // Gravity
         this.jumpStrength = -12;
         this.grounded = false;
+        this.currentPlatform = null; // Keep track of the current platform
     }
 
     update() {
@@ -32,12 +32,14 @@ class Player {
         if (this.y + this.height >= lavaY) {
             this.reset();
         }
-
+    
         this.dy += this.gravity; // Apply gravity
         this.y += this.dy; // Update player position
-
+    
         // Reset grounded status
         this.grounded = false;
+        this.currentPlatform = null; // Reset current platform
+    
         for (let platform of platforms) {
             if (this.checkCollision(platform)) {
                 // Check if the player falls onto the platform
@@ -45,28 +47,52 @@ class Player {
                     this.y = platform.y - this.height; // Set player on platform
                     this.dy = 0; // Reset vertical speed
                     this.grounded = true; // Player is now on the ground
+                    this.currentPlatform = platform; // Set current platform
                 } else if (this.dy < 0) {
                     // Player jumps and hits the platform from below
-                    this.y = platform.y + platform.height; // Set player on platform
+                    this.y = platform.y + platform.height; // Set player above platform
                     this.dy = 0; // Reset vertical speed
+                }
+    
+                // Adjust player's horizontal position based on platform movement
+                if (this.grounded && this.currentPlatform.type === "moving") {
+                    // Move player with platform based on its direction
+                    if (this.currentPlatform.movingForward) {
+                        this.x += this.currentPlatform.speed; // Moving right
+                    } else {
+                        this.x -= this.currentPlatform.speed; // Moving left
+                    }
                 }
                 break; // Exit loop if collision is detected
             }
         }
-
+    
         // Draw player
         ctx.fillStyle = '#FF0000'; // Player color
         ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
     }
+    
+    
 
     checkCollision(platform) {
-        return (
-            this.x < platform.x + platform.width &&
-            this.x + this.width > platform.x &&
-            this.y < platform.y + platform.height &&
-            this.y + this.height > platform.y
-        );
+        const isCollidingFromAbove = this.x < platform.x + platform.width &&
+                                      this.x + this.width > platform.x &&
+                                      this.y + this.height <= platform.y + this.dy &&
+                                      this.y + this.height >= platform.y;
+        
+        const isCollidingFromBelow = this.x < platform.x + platform.width &&
+                                      this.x + this.width > platform.x &&
+                                      this.y >= platform.y + platform.height &&
+                                      this.y <= platform.y + platform.height + this.dy;
+    
+        const isCollidingFromSides = this.x < platform.x + platform.width &&
+                                      this.x + this.width > platform.x &&
+                                      this.y < platform.y + platform.height &&
+                                      this.y + this.height > platform.y;
+    
+        return isCollidingFromAbove || isCollidingFromBelow || isCollidingFromSides;
     }
+    
 
     jump() {
         if (this.grounded) {
@@ -83,6 +109,7 @@ class Player {
     }
 }
 
+
 // Collider Class
 class Collider {
     constructor(x, y, width, height) {
@@ -92,7 +119,6 @@ class Collider {
         this.height = height;
     }
 
-    // No drawing of colliders
     checkCollision(player) {
         return (
             player.x < this.x + this.width &&
@@ -105,15 +131,16 @@ class Collider {
 
 // Platform Class (inherits from Collider)
 class Platform extends Collider {
-    constructor(x, y, width, height, tileSrc, tileSize) {
-        // Check if width is divisible by tileSize, if not adjust
-        const remainder = width % tileSize;
-        const adjustedWidth = remainder === 0 ? width : width + (tileSize - remainder); // Adjust width to be divisible by tileSize
-
-        super(x, y, adjustedWidth, height); // Set collider width to adjustedWidth
+    constructor(x, y, width, height, tileSrc, tileSize, type, speed, direction, range) {
+        super(x, y, width, height);
         this.tile = new Image(); // Create a new Image object for the tile
         this.tile.src = tileSrc; // Load the tile texture
         this.tileSize = tileSize; // Size of each tile (assuming square tiles)
+        this.type = type; // Platform type
+        this.speed = speed || 0; // Movement speed for moving platforms
+        this.direction = direction || "horizontal"; // Movement direction
+        this.range = range || { start: x, end: x }; // Movement range
+        this.movingForward = true; // Movement state
     }
 
     draw(cameraOffsetX, cameraOffsetY) {
@@ -122,6 +149,38 @@ class Platform extends Collider {
             ctx.drawImage(this.tile, this.x - cameraOffsetX + i * this.tileSize, this.y - cameraOffsetY, this.tileSize, this.tileSize);
         }
     }
+
+    update() {
+        // Update the position of the platform if it's moving
+        if (this.type === "moving") {
+            if (this.direction === "horizontal") {
+                if (this.movingForward) {
+                    this.x += this.speed;
+                    if (this.x >= this.range.end) {
+                        this.movingForward = false; // Change direction
+                    }
+                } else {
+                    this.x -= this.speed;
+                    if (this.x <= this.range.start) {
+                        this.movingForward = true; // Change direction
+                    }
+                }
+            } else if (this.direction === "vertical") {
+                if (this.movingForward) {
+                    this.y += this.speed;
+                    if (this.y >= this.range.end) {
+                        this.movingForward = false; // Change direction
+                    }
+                } else {
+                    this.y -= this.speed;
+                    if (this.y <= this.range.start) {
+                        this.movingForward = true; // Change direction
+                    }
+                }
+            }
+        }
+    }
+    
 }
 
 // Camera Class
@@ -149,8 +208,20 @@ async function loadLevel(level) {
     levelWidth = data.width || 2000; // Set level width, or default to 2000
     levelHeight = data.height || 1000; // Set level height, or default to 1000
 
-    // Create platforms with textures
-    platforms = data.platforms.map(p => new Platform(p.x, p.y, p.width, p.height, p.tileSrc, 48));
+    // Create platforms and colliders with textures
+    platforms = data.platforms.map(p => new Platform(
+        p.x,
+        p.y,
+        p.width,
+        p.height,
+        p.tileSrc,
+        48, // Tile size
+        p.type || "static", // Default to static if not specified
+        p.speed || 0, // Default speed to 0 for static
+        p.direction || "horizontal", // Default direction
+        p.range || { start: p.x, end: p.x } // Default range to its own position
+    ));
+    colliders = platforms; // In this case, colliders are the platforms
 }
 
 // Move Player
@@ -177,8 +248,9 @@ function update() {
     // Update camera based on player position
     camera.update(player, canvas.width, canvas.height);
 
-    // Draw platforms
+    // Update platforms and colliders, and draw them
     for (let platform of platforms) {
+        platform.update(); // Update the platform's position if moving
         // Only draw if within visible bounds (for optimization)
         if (platform.y + platform.height > camera.y && platform.y < camera.y + canvas.height &&
             platform.x + platform.width > camera.x && platform.x < camera.x + canvas.width) {
