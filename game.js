@@ -54,6 +54,13 @@ class Player {
                     this.y = platform.y - this.height; // Place player on top of the platform
                     this.dy = 0; // Reset vertical speed
                     this.grounded = true; // Player is now grounded
+    
+                    // Move player with the platform based on its direction
+                    if (platform.type === "moving") {
+                        if (platform.direction === "horizontal") {
+                            this.x += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
+                        }
+                    }
                 } else if (this.dy < 0 && playerBottom >= platform.y) {
                     // Colliding from below
                     this.y = platform.y + platform.height; // Move player above the platform
@@ -75,27 +82,19 @@ class Player {
     
                     if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
                         this.x = platformLeft - this.width; // Move player to the left of the platform
-                        if (platform.type === "moving") {
-                            this.x -= platform.speed; // Move with the platform
-                        }
                     } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
                         this.x = platformRight; // Move player to the right of the platform
-                        if (platform.type === "moving") {
-                            this.x += platform.speed; // Move with the platform
-                        }
                     }
                 }
             }
+        }
     
         // Draw player
         ctx.fillStyle = '#FF0000'; // Player color
         ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
     }
     
-        // Draw player
-        ctx.fillStyle = '#FF0000'; // Player color
-        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
-    }
+    
     
 
     checkCollision(platform) {
@@ -115,19 +114,8 @@ class Player {
         const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
         const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
     
-        // Allow a slight buffer for horizontal collisions
-        const horizontalBuffer = 5; // Change this value as needed
-        const isNearLeft = playerRight > platformLeft - horizontalBuffer && playerLeft < platformLeft;
-        const isNearRight = playerLeft < platformRight + horizontalBuffer && playerRight > platformRight;
-    
-        return (
-            isCollidingFromAbove || 
-            isCollidingFromBelow || 
-            (isCollidingFromLeft && isNearLeft) || 
-            (isCollidingFromRight && isNearRight)
-        );
+        return isCollidingFromAbove || isCollidingFromBelow || isCollidingFromLeft || isCollidingFromRight;
     }
-    
     
     
     
