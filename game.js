@@ -520,7 +520,7 @@ function update() {
     if (player.x >= endX) {
          if (timer<highScore)localStorage.setItem('highScore', highScore);
         timerActive = false; // Stop the timer
-        alert(`Your best Time: ${timer.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
+        alert(`Your best Time: ${highScore} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
         // Display end level message or handle level completion here
         ctx.fillStyle = 'black';
         ctx.font = '30px Arial';
