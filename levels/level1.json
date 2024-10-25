@@ -3,10 +3,10 @@
         "x": 50,
         "y": 220
     },
-    "width": 2000,
-    "height": 1000,
+    "width": 4000,
+    "height": 2000,
     "lava": {
-        "initialY": 1000,
+        "initialY": 1200,
         "rising": false,
         "speed": 0.5,
         "lavaSrc": "textures/lava.png"
@@ -18,12 +18,21 @@
     },
     "textureScales": [
         {
-            "texture": "textures/gras.png",
+            "texture": "textures/grass.png",
             "scale": 48
         },
-        { "texture": "textures/scaffold2.png", "scale": 15 },
-        { "texture": "textures/scaffold2-upscaled.png", "scale": 60 },
-        {"texture":"textures/scaffold1.png","scale":64}
+        {
+            "texture": "textures/scaffold1.png",
+            "scale": 64
+        },
+        {
+            "texture": "textures/scaffold2.png",
+            "scale": 15
+        },
+        {
+            "texture": "textures/scaffold2-upscaled.png",
+            "scale": 60
+        }
     ],
     "platforms": [
         {
@@ -34,35 +43,107 @@
             "tileSrc": "textures/grass.png"
         },
         {
-            "x": 300,
-            "y": 240,
-            "width": 350,
-            "height": 48,
-            "tileSrc": "textures/grass.png",
-            "type": "moving",
-            "speed": 2,
-            "direction": "horizontal",
-            "range": {
-                "start": 100,
-                "end": 400
-            }
-        },
-        {
-            "x": 0,
-            "y": 110,
-            "width": 400,
-            "height": 40,
-            "type": "scaffold",
-            "tileSrc": "textures/scaffold2.png"
-        },
-        {
-            "type": "breaking",
-            "x": 100,
+            "x": 200,
             "y": 200,
-            "width": 200,
-            "height": 20,
+            "width": 300,
+            "height": 50,
             "tileSrc": "textures/scaffold1.png",
-            "breakTime": 3000 
+            "type": "scaffold"
+        },
+        {
+            "x": 500,
+            "y": 100,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 700,
+            "y": 350,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "breaking",
+            "breakTime": 2000
+        },
+        {
+            "x": 900,
+            "y": 200,
+            "width": 250,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 1100,
+            "y": 300,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 1650,
+            "y": 350,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "breaking",
+            "breakTime": 2000
+        },
+        {
+            "x": 2000,
+            "y": 400,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 2500,
+            "y": 450,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 2700,
+            "y": 350,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "breaking",
+            "breakTime": 2000
+        },
+        {
+            "x": 2900,
+            "y": 300,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 3300,
+            "y": 250,
+            "width": 250,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 3600,
+            "y": 300,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 4000,
+            "y": 400,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "breaking",
+            "breakTime": 2000
         }
-    ] 
+    ]
 }

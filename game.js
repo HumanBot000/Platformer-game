@@ -24,6 +24,9 @@ class Player {
         this.width = width;
         this.height = height;
         this.speed = 5;
+        this.originalSpeed = this.speed; // Store original speed
+        this.speedBoostActive = false; // Track if speed boost is active
+        this.speedBoostDuration = 0; // Duration for the boost
         this.dy = 0;
         this.gravity = 0.5;
         this.jumpStrength = -12;
@@ -146,14 +149,21 @@ class Player {
     }
 
     reset() {
-        // Reset player position to spawn point
-        this.x = spawn.x;
-        this.y = spawn.y;
-        this.dy = 0;
+        window.location.reload();
+    }
+
+    collectSpeedBoost(boostAmount, duration) {
+        if (!this.speedBoostActive) {
+            this.speed += boostAmount; // Increase speed
+            this.speedBoostActive = true; // Activate speed boost
+            this.speedBoostDuration = duration; // Set boost duration
+            setTimeout(() => {
+                this.speed -= boostAmount; // Revert speed after duration
+                this.speedBoostActive = false; // Deactivate speed boost
+            }, duration);
+        }
     }
 }
-
-
 // Collider Class
 class Collider {
     constructor(x, y, width, height) {
@@ -390,11 +400,58 @@ async function loadLevel(level) {
             tileSize,
         );
     });
+    speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost,"textures/speed-boost.png"));
     colliders = platforms;
 
 }
 
+class SpeedItem extends Collider {
+    constructor(x, y, duration, speedBoost, imageSrc) {
+        super(x, y, 20, 20); // Set the size of the item
+        this.x = x;
+        this.y = y;
+        this.width = 20;
+        this.height = 20;
+        this.duration = duration; // Duration of speed boost
+        this.speedBoost = speedBoost; // Amount of speed boost
+        this.collected = false; // Track if collected
 
+        // Load the image for the speed item
+        this.image = new Image();
+        this.image.src = imageSrc;
+    }
+
+    update(player) {
+        if (this.collected) return; // Do nothing if already collected
+
+        // Check for collision with the player
+        if (this.checkCollision(player)) {
+            player.collectSpeedBoost(this.speedBoost, this.duration); // Apply speed boost
+            this.collected = true; // Mark as collected
+        }
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        if (this.collected) return; // Don't draw if collected
+
+        // Draw the image instead of a rectangle
+        if (this.image.complete) { // Ensure the image is loaded
+            ctx.drawImage(
+                this.image,
+                this.x - cameraOffsetX,
+                this.y - cameraOffsetY,
+                this.width,
+                this.height
+            );
+        } else {
+            // If the image isn’t loaded yet, you could display a temporary placeholder
+            ctx.fillStyle = 'gold';
+            ctx.fillRect(this.x - cameraOffsetX, this.y - cameraOffsetY, this.width, this.height);
+        }
+    }
+}
+
+ 
 // Move Player
 function movePlayer() {
     if (keys['ArrowRight']) {
@@ -462,6 +519,10 @@ function update() {
         ctx.fillStyle = '#FF4500';
         ctx.fillRect(0, lavaY - camera.y, canvas.width, canvas.height - lavaY);
     }
+    for (let speedItem of speedItems) {
+        speedItem.update(player); // Update each speed item
+        speedItem.draw(camera.x, camera.y); // Draw each speed item
+    }
 }
 
 // Capture Key Inputs
@@ -479,7 +540,7 @@ window.addEventListener('keyup', (e) => {
 // Initialize Game
 async function init() {
     camera = new Camera(); // Create camera instance
-    await loadLevel('level1'); // Load the level
+    await loadLevel('level2'); // Load the level
     update();
     setInterval(update, 1000 / 60); // 60 FPS
 }
