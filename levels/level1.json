@@ -1,5 +1,8 @@
 {
-    "spawn": { "x": 50, "y": 220 },
+    "spawn": {
+        "x": 50,
+        "y": 220
+    },
     "width": 2000,
     "height": 1000,
     "lava": {
@@ -13,6 +16,13 @@
         "width": 30,
         "height": 30
     },
+    "textureScales": [
+        {
+            "texture": "textures/gras.png",
+            "scale": 48
+        },
+        { "texture": "textures/scaffold2.png", "scale": 15 }
+    ],
     "platforms": [
         {
             "x": 0,
@@ -29,8 +39,19 @@
             "tileSrc": "textures/grass.png",
             "type": "moving",
             "speed": 2,
-            "direction": "vertical",
-            "range": { "start": 100, "end": 400 }
+            "direction": "horizontal",
+            "range": {
+                "start": 100,
+                "end": 400
+            }
+        },
+        {
+            "x": 0,
+            "y": 210,
+            "width": 150,
+            "height": 15,
+            "type": "scaffold",
+            "tileSrc": "textures/scaffold2.png"
         }
     ]
 }

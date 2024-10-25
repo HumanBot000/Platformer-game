@@ -42,65 +42,62 @@ class Player {
         const playerBottom = this.y + this.height;
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
-
+    
         // Reset grounded status
         this.grounded = false;
-
+    
         // Apply gravity
         this.dy += this.gravity; // Apply gravity
         this.y += this.dy; // Update player vertical position
-
+    
         // Collision with lava
         if (this.y + this.height >= lavaY) {
             this.reset(); // Reset if the player hits lava
         }
-
+    
         for (let platform of platforms) {
-            if (this.checkCollision(platform)) {
-                // Handle vertical collisions
-                if (this.dy > 0 && playerBottom <= platform.y + this.dy) {
-                    // Colliding from above
-                    this.y = platform.y - this.height; // Place player on top of the platform
+            if (!this.checkCollision(platform)) {
+                continue;}
+            // Handle vertical collisions
+            if (this.dy > 0 && playerBottom <= platform.y + this.dy) {
+                // Colliding from above
+                this.y = platform.y - this.height; // Place player on top of the platform
                     this.dy = 0; // Reset vertical speed
-                    this.grounded = true; // Player is now grounded
-
-                    // Move player with the platform based on its direction
-                    if (platform instanceof MovingPlatform) {
-                        if (platform.direction === "horizontal") {
-                            this.x += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
-                        }
-                        else{
-                            this.y += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
-                        }
+                    this.grounded = true; // Pla
+                // Move player with the platform based on its direction
+                if (platform instanceof MovingPlatform) {
+                    if (platform.direction === "horizontal") {
+                        this.x += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
+                    } else {
+                        this.y += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
                     }
-                } else if (this.dy < 0 && playerBottom >= platform.y) {
-                    // Colliding from below
-                    this.y = platform.y + platform.height; // Move player above the platform
-                    this.dy = 0; // Reset vertical speed
-                } else {
-                    // Handle horizontal collisions
-                    const platformTop = platform.y;
-                    const platformBottom = platform.y + platform.height;
-                    const platformLeft = platform.x;
-                    const platformRight = platform.x + platform.width;
-
-                    const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
-                    const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
-
-                    // Allow a slight buffer for horizontal collisions
-                    const horizontalBuffer = 5; // Change this value as needed
-                    const isNearLeft = playerRight > platformLeft - horizontalBuffer && playerLeft < platformLeft;
-                    const isNearRight = playerLeft < platformRight + horizontalBuffer && playerRight > platformRight;
-
-                    if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
-                        this.x = platformLeft - this.width; // Move player to the left of the platform
-                    } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
-                        this.x = platformRight; // Move player to the right of the platform
-                    }
+                }
+                continue
+            }  
+            if (this.dy < 0 && playerBottom >= platform.y) {
+                // Colliding from below
+                if (!(platform instanceof ScaffoldPlatform)) { 
+                    this.y = platform.y + platform.height; 
+                    this.dy = 0; 
+                }
+            } else {
+                // Handle horizontal collisions
+                const platformTop = platform.y;
+                const platformBottom = platform.y + platform.height;
+                const platformLeft = platform.x;
+                const platformRight = platform.x + platform.width;
+                const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
+                const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
+                const isNearLeft = playerRight > platformLeft && playerLeft < platformLeft;
+                const isNearRight = playerLeft < platformRight  && playerRight > platformRight;
+                if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
+                    this.x = platformLeft - this.width; // Move player to the left of the platform
+                } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
+                    this.x = platformRight; // Move player to the right of the platform
                 }
             }
         }
-
+    
         // Draw player
         if (this.texture && this.texture.complete) {
             ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
@@ -109,6 +106,7 @@ class Player {
             ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
         }
     }
+    
 
 
 
@@ -196,7 +194,36 @@ class StaticPlatform extends Platform {
         super(x, y, width, height, tileSrc, tileSize,);
     }
 }
+class ScaffoldPlatform extends Platform {
+    constructor(x, y, width, height, tileSrc, tileSize) {
+        super(x, y, width, height, tileSrc, tileSize);
+    }
 
+    // Override the checkCollision method
+    checkCollision(player) {
+        const playerTop = player.y;
+        const playerBottom = player.y + player.height;
+        const playerLeft = player.x;
+        const playerRight = player.x + player.width;
+
+        const platformTop = this.y;
+        const platformBottom = this.y + this.height;
+        const platformLeft = this.x;
+        const platformRight = this.x + this.width;
+
+        // Allow jumping through the platform from below
+        const isCollidingFromBelow = playerBottom >= platformTop && playerTop < platformTop && playerRight > platformLeft && playerLeft < platformRight;
+
+        // Collision detection when the player is on top of the platform
+        const isCollidingFromAbove = playerBottom >= platformTop && playerTop < platformTop && playerRight > platformLeft && playerLeft < platformRight;
+
+        // Check if the player is on the platform (colliding from above)
+        const isOnPlatform = isCollidingFromAbove && playerBottom <= platformBottom;
+
+        // Return true if the player is on the platform, or if they're below it (allowing jump through)
+        return isOnPlatform || (isCollidingFromBelow && !isOnPlatform);
+    }
+}
 class MovingPlatform extends Platform {
     constructor(x, y, width, height, tileSrc, tileSize, speed, direction, range) {
         super(x, y, width, height, tileSrc, tileSize,);
@@ -248,6 +275,11 @@ class Camera {
     }
 }
 
+function getTextureScale(textureSrc, textureScales) {
+    const textureInfo = textureScales.find(t => t.texture === textureSrc);
+    return textureInfo ? textureInfo.scale : 48; // Default to 48 if not found
+}
+
 // Load Level from JSON
 async function loadLevel(level) {
     const response = await fetch(`levels/${level}.json`);
@@ -275,6 +307,7 @@ async function loadLevel(level) {
 
     // Create platforms
     platforms = data.platforms.map(p => {
+        const tileSize = getTextureScale(p.tileSrc, data.textureScales);
         if (p.type === "moving") {
             return new MovingPlatform(
                 p.x,
@@ -282,22 +315,30 @@ async function loadLevel(level) {
                 p.width,
                 p.height,
                 p.tileSrc,
-                48,
+                tileSize,
                 p.speed || 0,
                 p.direction || "horizontal",
                 p.range || { start: p.x, end: p.x }
             );
-        } else {
-            // Default to StaticPlatform if type is not "moving"
-            return new StaticPlatform(
+        }
+        if (p.type == "scaffold") {
+            return new ScaffoldPlatform(
                 p.x,
                 p.y,
                 p.width,
                 p.height,
                 p.tileSrc,
-                48
+                tileSize,
             );
         }
+        return new StaticPlatform(
+            p.x,
+            p.y,
+            p.width,
+            p.height,
+            p.tileSrc,
+            tileSize,
+        );
     });
     colliders = platforms;
 
