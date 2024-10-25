@@ -3,22 +3,48 @@
         "x": 100,
         "y": 300
     },
-    "width": 6000, 
+    "width": 9000,
     "height": 2000,
     "speedItems": [
-    {
-      "x": 200,
-      "y": 340,
-      "duration": 5000,  
-      "speedBoost": 3    
-    },
-    {
-        "x": 4110,
-        "y": 570,
-        "duration": 5000,  
-        "speedBoost": 3    
-      }
-  ],
+        {
+            "x": 300,
+            "y": 340,
+            "duration": 5000,
+            "speedBoost": 3
+        },
+        {
+            "x": 4110,
+            "y": 570,
+            "duration": 1000,
+            "speedBoost": 3
+        },
+        {
+            "x": 5921,
+            "y": 275,
+            "duration": 5000,
+            "speedBoost": 7
+        },
+        {
+            "x": 7500,
+            "y": 300,
+            "duration": 5000,
+            "speedBoost": 3
+        }
+    ],
+    "checkpoints": [
+        {
+            "x": 200,
+            "y": 340,
+            "width": 20,
+            "height": 20
+        },
+        {
+            "x": 500,
+            "y": 180,
+            "width": 20,
+            "height": 20
+        }
+    ],
     "lava": {
         "initialY": 1500,
         "lavaSrc": "textures/lava.png"
@@ -112,7 +138,7 @@
             "height": 50,
             "tileSrc": "textures/scaffold1.png",
             "type": "breaking",
-            "breakTime": 240
+            "breakTime": 300
         },
         {
             "x": 2800,
@@ -199,11 +225,72 @@
             "height": 50,
             "tileSrc": "textures/grass.png",
             "type": "moving",
-            "speed": 6,
+            "speed": 0.3,
             "direction": "vertical",
             "range": {
                 "start": 300,
                 "end": 400
+            }
+        },
+        {
+            "x": 6300,
+            "y": 500,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 6700,
+            "y": 450,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 4000
+        },
+        {
+            "x": 7000,
+            "y": 400,
+            "width": 700,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "moving",
+            "speed": 3,
+            "direction": "horizontal",
+            "range": {
+                "start": 6900,
+                "end": 7300
+            }
+        },
+        {
+            "x": 7600,
+            "y": 550,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 7900,
+            "y": 500,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 8300,
+            "y": 450,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 4,
+            "direction": "horizontal",
+            "range": {
+                "start": 8200,
+                "end": 8500
             }
         }
     ]

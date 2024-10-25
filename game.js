@@ -31,7 +31,7 @@ class Player {
         this.gravity = 0.5;
         this.jumpStrength = -12;
         this.grounded = false;
-
+        this.lastCheckpoint = null;
         // Load texture if specified
         this.texture = new Image();
         if (textureSrc) {
@@ -149,7 +149,16 @@ class Player {
     }
 
     reset() {
-        window.location.reload();
+        if (this.lastCheckpoint) {
+            this.x = this.lastCheckpoint.x;
+            this.y = this.lastCheckpoint.y;
+            this.dy = 0; // Reset vertical speed
+        } else {
+            // Reset to spawn point
+            this.x = spawn.x;
+            this.y = spawn.y;
+            this.dy = 0; // Reset vertical speed
+        }
     }
 
     collectSpeedBoost(boostAmount, duration) {
@@ -401,6 +410,12 @@ async function loadLevel(level) {
         );
     });
     speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost,"textures/speed-boost.png"));
+    checkpoints = data.checkpoints.map(cp => new Checkpoint(
+        cp.x,
+        cp.y,
+        cp.width,
+        cp.height,
+    ));
     colliders = platforms;
 
 }
@@ -450,6 +465,33 @@ class SpeedItem extends Collider {
         }
     }
 }
+
+
+class Checkpoint extends Collider {
+    constructor(x, y, width, height) {
+        super(x, y, width, height);
+        this.touched = false; // Track if the checkpoint has been touched
+        this.touchedImage = new Image(); 
+        this.untouchedImage = new Image(); 
+        this.touchedImage.src = "textures/checkpoint-touched.png"; // Image for touched checkpoint
+        this.untouchedImage.src = "textures/checkpoint-untouched.png"; // Image for untouched checkpoint
+    }
+
+    update(player) {
+        // Check for collision with the player
+        if (!this.touched && this.checkCollision(player)) {
+            this.touched = true; // Mark as touched
+        }
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        const imageToDraw = this.touched ? this.touchedImage : this.untouchedImage;
+        if (imageToDraw.complete) { // Ensure the image is loaded before drawing
+            ctx.drawImage(imageToDraw, this.x - cameraOffsetX, this.y - cameraOffsetY, this.width, this.height);
+        }
+    }
+}
+
 
  
 // Move Player
@@ -522,6 +564,13 @@ function update() {
     for (let speedItem of speedItems) {
         speedItem.update(player); // Update each speed item
         speedItem.draw(camera.x, camera.y); // Draw each speed item
+    }
+    for (let checkpoint of checkpoints) {
+        checkpoint.update(player); // Update checkpoint state
+        checkpoint.draw(camera.x, camera.y); // Draw checkpoint
+        if (checkpoint.touched) {
+            player.lastCheckpoint = checkpoint; // Update player's last touched checkpoint
+        }
     }
 }
 
