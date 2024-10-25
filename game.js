@@ -10,21 +10,30 @@ let spawn = { x: 50, y: 220 }; // Default spawn point
 let levelWidth; // Set based on loaded level
 let levelHeight; // Set based on loaded level
 let camera; // Declare camera variable
+let lavaRising = false;
+let lavaSpeed = 0;
+let lavaTexture = new Image();
 
 // Key status
 const keys = {};
 
 class Player {
-    constructor(x, y) {
+    constructor(x, y, width = 30, height = 30, textureSrc = null) {
         this.x = x;
         this.y = y;
-        this.width = 30; // Player width
-        this.height = 30; // Player height
-        this.speed = 5; // Player speed
-        this.dy = 0; // Vertical speed
-        this.gravity = 0.5; // Gravity
-        this.jumpStrength = -12; // Jump strength
-        this.grounded = false; // Is the player grounded?
+        this.width = width;
+        this.height = height;
+        this.speed = 5;
+        this.dy = 0;
+        this.gravity = 0.5;
+        this.jumpStrength = -12;
+        this.grounded = false;
+
+        // Load texture if specified
+        this.texture = new Image();
+        if (textureSrc) {
+            this.texture.src = textureSrc;
+        }
     }
 
     update() {
@@ -90,8 +99,12 @@ class Player {
         }
     
         // Draw player
-        ctx.fillStyle = '#FF0000'; // Player color
-        ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height); // Draw player considering camera offset
+        if (this.texture && this.texture.complete) {
+            ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
+        }
     }
     
     
@@ -158,7 +171,8 @@ class Collider {
 // Platform Class (inherits from Collider)
 class Platform extends Collider {
     constructor(x, y, width, height, tileSrc, tileSize, type, speed, direction, range) {
-        super(x, y, width, height);
+        super(x, y, Math.round(width / tileSize) * tileSize, height);
+        this.width = Math.round(width / tileSize) * tileSize;
         this.tile = new Image(); // Create a new Image object for the tile
         this.tile.src = tileSrc; // Load the tile texture
         this.tileSize = tileSize; // Size of each tile (assuming square tiles)
@@ -227,27 +241,42 @@ async function loadLevel(level) {
     const response = await fetch(`levels/${level}.json`);
     const data = await response.json();
 
-    spawn = data.spawn; // Set spawn point
-    player = new Player(spawn.x, spawn.y); // Create player with spawn point
-    lavaY = canvas.height - 30; // Set lava height
-    levelWidth = data.width || 2000; // Set level width, or default to 2000
-    levelHeight = data.height || 1000; // Set level height, or default to 1000
+    // Set spawn point
+    spawn = data.spawn;
 
-    // Create platforms and colliders with textures
+    // Load player with properties from JSON
+    const playerData = data.player || {};
+    const playerTexture = playerData.texture || null;
+    const playerWidth = playerData.width || 30;
+    const playerHeight = playerData.height || 30;
+    player = new Player(spawn.x, spawn.y, playerWidth, playerHeight, playerTexture);
+
+    // Lava properties
+    lavaY = data.lava.initialY || canvas.height - 30;
+    lavaRising = data.lava.rising || false;
+    lavaSpeed = data.lava.speed || 0;
+    lavaTexture.src = data.lava.lavaSrc;
+
+    // Level boundaries
+    levelWidth = data.width || 2000;
+    levelHeight = data.height || 1000;
+
+    // Create platforms
     platforms = data.platforms.map(p => new Platform(
         p.x,
         p.y,
         p.width,
         p.height,
         p.tileSrc,
-        48, // Tile size
-        p.type || "static", // Default to static if not specified
-        p.speed || 0, // Default speed to 0 for static
-        p.direction || "horizontal", // Default direction
-        p.range || { start: p.x, end: p.x } // Default range to its own position
+        48,
+        p.type || "static",
+        p.speed || 0,
+        p.direction || "horizontal",
+        p.range || { start: p.x, end: p.x }
     ));
-    colliders = platforms; // In this case, colliders are the platforms
+    colliders = platforms;
 }
+
 
 // Move Player
 function movePlayer() {
@@ -287,9 +316,29 @@ function update() {
     player.update();
 
     // Draw lava
-    if (lavaY > 0 && lavaY < canvas.height) {
-        ctx.fillStyle = '#FF4500'; // Lava color
-        ctx.fillRect(0, lavaY - camera.y, canvas.width, canvas.height - (lavaY - camera.y));
+     if (lavaRising) lavaY -= lavaSpeed; // Move lava up if rising
+    
+     if (lavaTexture.complete) { // Lava-Textur nur zeichnen, wenn geladen
+        const tileWidth = 16; // Breite einer Lava-Kachel
+        const tileHeight = 7; // Höhe einer Lava-Kachel
+        const tilesX = Math.ceil(canvas.width / tileWidth); // Anzahl der Kacheln horizontal
+        const tilesY = Math.ceil((canvas.height - lavaY) / tileHeight); // Anzahl der Kacheln vertikal
+
+        for (let y = 0; y < tilesY; y++) {
+            for (let x = 0; x < tilesX; x++) {
+                ctx.drawImage(
+                    lavaTexture,
+                    x * tileWidth,
+                    lavaY - camera.y + y * tileHeight,
+                    tileWidth,
+                    tileHeight
+                );
+            }
+        }
+    } else {
+        // Fallback-Farbe für Lava, falls Textur nicht geladen
+        ctx.fillStyle = '#FF4500';
+        ctx.fillRect(0, lavaY - camera.y, canvas.width, canvas.height - lavaY);
     }
 }
 

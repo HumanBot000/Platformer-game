@@ -2,8 +2,25 @@
     "spawn": { "x": 50, "y": 220 },
     "width": 2000,
     "height": 1000,
+    "lava": {
+        "initialY": 1000,
+        "rising": false,
+        "speed": 0.5,
+        "lavaSrc": "textures/lava.png"
+    },
+    "player": {
+        "texture": "textures/player.png",
+        "width": 30,
+        "height": 30
+    },
     "platforms": [
-        { "x": 0, "y": 300, "width":100, "height": 50, "tileSrc": "textures/grass.png" },
+        {
+            "x": 0,
+            "y": 300,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
         {
             "x": 400,
             "y": 240,
@@ -13,10 +30,7 @@
             "type": "moving",
             "speed": 2,
             "direction": "horizontal",
-            "range": {
-                "start": 100,
-                "end": 400
-            }
+            "range": { "start": -100, "end": 400 }
         }
     ]
 }
