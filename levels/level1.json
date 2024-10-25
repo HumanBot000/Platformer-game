@@ -22,15 +22,15 @@
             "tileSrc": "textures/grass.png"
         },
         {
-            "x": 400,
+            "x": 300,
             "y": 240,
             "width": 350,
             "height": 48,
             "tileSrc": "textures/grass.png",
             "type": "moving",
             "speed": 2,
-            "direction": "horizontal",
-            "range": { "start": -100, "end": 400 }
+            "direction": "vertical",
+            "range": { "start": 100, "end": 400 }
         }
     ]
 }

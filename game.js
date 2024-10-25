@@ -42,19 +42,19 @@ class Player {
         const playerBottom = this.y + this.height;
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
-    
+
         // Reset grounded status
         this.grounded = false;
-    
+
         // Apply gravity
         this.dy += this.gravity; // Apply gravity
         this.y += this.dy; // Update player vertical position
-    
+
         // Collision with lava
         if (this.y + this.height >= lavaY) {
             this.reset(); // Reset if the player hits lava
         }
-    
+
         for (let platform of platforms) {
             if (this.checkCollision(platform)) {
                 // Handle vertical collisions
@@ -63,11 +63,14 @@ class Player {
                     this.y = platform.y - this.height; // Place player on top of the platform
                     this.dy = 0; // Reset vertical speed
                     this.grounded = true; // Player is now grounded
-    
+
                     // Move player with the platform based on its direction
-                    if (platform.type === "moving") {
+                    if (platform instanceof MovingPlatform) {
                         if (platform.direction === "horizontal") {
                             this.x += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
+                        }
+                        else{
+                            this.y += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's speed based on direction
                         }
                     }
                 } else if (this.dy < 0 && playerBottom >= platform.y) {
@@ -80,15 +83,15 @@ class Player {
                     const platformBottom = platform.y + platform.height;
                     const platformLeft = platform.x;
                     const platformRight = platform.x + platform.width;
-    
+
                     const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
                     const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
-    
+
                     // Allow a slight buffer for horizontal collisions
                     const horizontalBuffer = 5; // Change this value as needed
                     const isNearLeft = playerRight > platformLeft - horizontalBuffer && playerLeft < platformLeft;
                     const isNearRight = playerLeft < platformRight + horizontalBuffer && playerRight > platformRight;
-    
+
                     if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
                         this.x = platformLeft - this.width; // Move player to the left of the platform
                     } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
@@ -97,7 +100,7 @@ class Player {
                 }
             }
         }
-    
+
         // Draw player
         if (this.texture && this.texture.complete) {
             ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
@@ -106,32 +109,32 @@ class Player {
             ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
         }
     }
-    
-    
-    
+
+
+
 
     checkCollision(platform) {
         const playerTop = this.y;
         const playerBottom = this.y + this.height;
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
-    
+
         const platformTop = platform.y;
         const platformBottom = platform.y + platform.height;
         const platformLeft = platform.x;
         const platformRight = platform.x + platform.width;
-    
+
         const isCollidingFromAbove = playerBottom >= platformTop && playerTop < platformTop && playerRight > platformLeft && playerLeft < platformRight;
         const isCollidingFromBelow = playerTop <= platformBottom && playerBottom > platformBottom && playerRight > platformLeft && playerLeft < platformRight;
-    
+
         const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
         const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
-    
+
         return isCollidingFromAbove || isCollidingFromBelow || isCollidingFromLeft || isCollidingFromRight;
     }
-    
-    
-    
+
+
+
 
     jump() {
         if (this.grounded) {
@@ -168,19 +171,13 @@ class Collider {
     }
 }
 
-// Platform Class (inherits from Collider)
 class Platform extends Collider {
-    constructor(x, y, width, height, tileSrc, tileSize, type, speed, direction, range) {
+    constructor(x, y, width, height, tileSrc, tileSize) {
         super(x, y, Math.round(width / tileSize) * tileSize, height);
         this.width = Math.round(width / tileSize) * tileSize;
         this.tile = new Image(); // Create a new Image object for the tile
         this.tile.src = tileSrc; // Load the tile texture
         this.tileSize = tileSize; // Size of each tile (assuming square tiles)
-        this.type = type; // Platform type
-        this.speed = speed || 0; // Movement speed for moving platforms
-        this.direction = direction || "horizontal"; // Movement direction
-        this.range = range || { start: x, end: x }; // Movement range
-        this.movingForward = true; // Movement state
     }
 
     draw(cameraOffsetX, cameraOffsetY) {
@@ -189,39 +186,54 @@ class Platform extends Collider {
             ctx.drawImage(this.tile, this.x - cameraOffsetX + i * this.tileSize, this.y - cameraOffsetY, this.tileSize, this.tileSize);
         }
     }
+    update() {
+    }
+}
+
+// Static Platform Class
+class StaticPlatform extends Platform {
+    constructor(x, y, width, height, tileSrc, tileSize) {
+        super(x, y, width, height, tileSrc, tileSize,);
+    }
+}
+
+class MovingPlatform extends Platform {
+    constructor(x, y, width, height, tileSrc, tileSize, speed, direction, range) {
+        super(x, y, width, height, tileSrc, tileSize,);
+        this.speed = speed || 0; // Movement speed for moving platforms
+        this.direction = direction || "horizontal"; // Movement direction
+        this.range = range || { start: x, end: x }; // Movement range
+        this.movingForward = true; // Movement state
+    }
 
     update() {
-        // Update the position of the platform if it's moving
-        if (this.type === "moving") {
-            if (this.direction === "horizontal") {
-                if (this.movingForward) {
-                    this.x += this.speed;
-                    if (this.x >= this.range.end) {
-                        this.movingForward = false; // Change direction
-                    }
-                } else {
-                    this.x -= this.speed;
-                    if (this.x <= this.range.start) {
-                        this.movingForward = true; // Change direction
-                    }
+        if (this.direction === "horizontal") {
+            if (this.movingForward) {
+                this.x += this.speed;
+                if (this.x >= this.range.end) {
+                    this.movingForward = false; // Change direction
                 }
-            } else if (this.direction === "vertical") {
-                if (this.movingForward) {
-                    this.y += this.speed;
-                    if (this.y >= this.range.end) {
-                        this.movingForward = false; // Change direction
-                    }
-                } else {
-                    this.y -= this.speed;
-                    if (this.y <= this.range.start) {
-                        this.movingForward = true; // Change direction
-                    }
+            } else {
+                this.x -= this.speed;
+                if (this.x <= this.range.start) {
+                    this.movingForward = true; // Change direction
+                }
+            }
+        } else if (this.direction === "vertical") {
+            if (this.movingForward) {
+                this.y += this.speed;
+                if (this.y >= this.range.end) {
+                    this.movingForward = false; // Change direction
+                }
+            } else {
+                this.y -= this.speed;
+                if (this.y <= this.range.start) {
+                    this.movingForward = true; // Change direction
                 }
             }
         }
     }
 }
-
 // Camera Class
 class Camera {
     constructor() {
@@ -262,19 +274,33 @@ async function loadLevel(level) {
     levelHeight = data.height || 1000;
 
     // Create platforms
-    platforms = data.platforms.map(p => new Platform(
-        p.x,
-        p.y,
-        p.width,
-        p.height,
-        p.tileSrc,
-        48,
-        p.type || "static",
-        p.speed || 0,
-        p.direction || "horizontal",
-        p.range || { start: p.x, end: p.x }
-    ));
+    platforms = data.platforms.map(p => {
+        if (p.type === "moving") {
+            return new MovingPlatform(
+                p.x,
+                p.y,
+                p.width,
+                p.height,
+                p.tileSrc,
+                48,
+                p.speed || 0,
+                p.direction || "horizontal",
+                p.range || { start: p.x, end: p.x }
+            );
+        } else {
+            // Default to StaticPlatform if type is not "moving"
+            return new StaticPlatform(
+                p.x,
+                p.y,
+                p.width,
+                p.height,
+                p.tileSrc,
+                48
+            );
+        }
+    });
     colliders = platforms;
+
 }
 
 
@@ -316,9 +342,9 @@ function update() {
     player.update();
 
     // Draw lava
-     if (lavaRising) lavaY -= lavaSpeed; // Move lava up if rising
-    
-     if (lavaTexture.complete) { // Lava-Textur nur zeichnen, wenn geladen
+    if (lavaRising) lavaY -= lavaSpeed; // Move lava up if rising
+
+    if (lavaTexture.complete) { // Lava-Textur nur zeichnen, wenn geladen
         const tileWidth = 16; // Breite einer Lava-Kachel
         const tileHeight = 7; // Höhe einer Lava-Kachel
         const tilesX = Math.ceil(canvas.width / tileWidth); // Anzahl der Kacheln horizontal
