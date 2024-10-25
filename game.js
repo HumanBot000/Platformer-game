@@ -150,16 +150,14 @@ class Player {
 
     reset() {
         if (this.lastCheckpoint) {
-            this.x = this.lastCheckpoint.x;
-            this.y = this.lastCheckpoint.y;
-            this.dy = 0; // Reset vertical speed
+            loadLevel("level2", { x: this.lastCheckpoint.x, y: this.lastCheckpoint.y });
+            this.dy = 0; 
         } else {
-            // Reset to spawn point
-            this.x = spawn.x;
-            this.y = spawn.y;
-            this.dy = 0; // Reset vertical speed
+            loadLevel("level2", null);
         }
     }
+    
+    
 
     collectSpeedBoost(boostAmount, duration) {
         if (!this.speedBoostActive) {
@@ -339,12 +337,13 @@ function getTextureScale(textureSrc, textureScales) {
 }
 
 // Load Level from JSON
-async function loadLevel(level) {
+// Load Level from JSON
+async function loadLevel(level, customSpawn = null) {
     const response = await fetch(`levels/${level}.json`);
     const data = await response.json();
 
     // Set spawn point
-    spawn = data.spawn;
+    spawn = customSpawn || data.spawn;
 
     // Load player with properties from JSON
     const playerData = data.player || {};
@@ -397,7 +396,7 @@ async function loadLevel(level) {
                 p.height,
                 p.tileSrc,
                 tileSize,
-                p.breakTime // Include break time from JSON
+                p.breakTime 
             );
         }
         return new StaticPlatform(
@@ -409,7 +408,8 @@ async function loadLevel(level) {
             tileSize,
         );
     });
-    speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost,"textures/speed-boost.png"));
+
+    speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost, "textures/speed-boost.png"));
     checkpoints = data.checkpoints.map(cp => new Checkpoint(
         cp.x,
         cp.y,
@@ -417,8 +417,8 @@ async function loadLevel(level) {
         cp.height,
     ));
     colliders = platforms;
-
 }
+
 
 class SpeedItem extends Collider {
     constructor(x, y, duration, speedBoost, imageSrc) {
