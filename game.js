@@ -58,12 +58,16 @@ class Player {
         for (let platform of platforms) {
             if (!this.checkCollision(platform)) {
                 continue;}
+            platform.touched = true;
             // Handle vertical collisions
             if (this.dy > 0 && playerBottom <= platform.y + this.dy) {
                 // Colliding from above
                 this.y = platform.y - this.height; // Place player on top of the platform
                     this.dy = 0; // Reset vertical speed
-                    this.grounded = true; // Pla
+                    this.grounded = true;
+                    if (platform instanceof BreakingPlatform) {
+                        platform.update(1000 / 60); // Update the platform's state (assuming 60 FPS)
+                    }
                 // Move player with the platform based on its direction
                 if (platform instanceof MovingPlatform) {
                     if (platform.direction === "horizontal") {
@@ -261,6 +265,41 @@ class MovingPlatform extends Platform {
         }
     }
 }
+class BreakingPlatform extends Platform {
+    constructor(x, y, width, height, tileSrc, tileSize, breakTime) {
+        super(x, y, width, height, tileSrc, tileSize);
+        this.breakTime = breakTime; // Time in milliseconds before the platform breaks
+        this.timer = 0; // Timer for the breaking state
+        this.broken = false; // Track if the platform is broken
+        this.touched = false;
+    }
+
+    update(deltaTime) {
+        if (this.broken) return; // Do nothing if the platform is broken
+
+        // Increment timer
+        if (this.touched)this.timer += deltaTime;
+
+        // Check if the timer exceeds the break time
+        if (this.timer >= this.breakTime) {
+            this.broken = true; // Mark as broken
+        }
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        if (this.broken) return; // Do not draw if broken
+
+        // Calculate the damage level based on the timer
+        const damageLevel = Math.min(this.timer / this.breakTime, 1); // Value between 0 and 1
+        const alpha = 1 - damageLevel; // Fade out as it breaks
+
+        ctx.globalAlpha = alpha; // Set transparency based on damage level
+        super.draw(cameraOffsetX, cameraOffsetY); // Call the base class draw method
+        ctx.globalAlpha = 1; // Reset transparency
+    }
+}
+
+
 // Camera Class
 class Camera {
     constructor() {
@@ -331,6 +370,17 @@ async function loadLevel(level) {
                 tileSize,
             );
         }
+        if (p.type === "breaking") {
+            return new BreakingPlatform(
+                p.x,
+                p.y,
+                p.width,
+                p.height,
+                p.tileSrc,
+                tileSize,
+                p.breakTime // Include break time from JSON
+            );
+        }
         return new StaticPlatform(
             p.x,
             p.y,
@@ -370,15 +420,20 @@ function update() {
     camera.update(player, canvas.width, canvas.height);
 
     // Update platforms and colliders, and draw them
-    for (let platform of platforms) {
-        platform.update(); // Update the platform's position if moving
+    for (let i = platforms.length - 1; i >= 0; i--) {
+        const platform = platforms[i];
+        const deltaTime = 1000 / 60; // Assuming 60 FPS, calculate delta time
+        platform.update(deltaTime); // Update the platform's state
+        if (platform.broken) {
+            platforms.splice(i, 1); 
+            continue; 
+        }
         // Only draw if within visible bounds (for optimization)
         if (platform.y + platform.height > camera.y && platform.y < camera.y + canvas.height &&
             platform.x + platform.width > camera.x && platform.x < camera.x + canvas.width) {
             platform.draw(camera.x, camera.y); // Draw platforms with camera offset
         }
     }
-
     // Update player and draw
     player.update();
 

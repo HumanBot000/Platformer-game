@@ -1,0 +1,102 @@
+{
+    "spawn": {
+        "x": 100,
+        "y": 300
+    },
+    "width": 4000,
+    "height": 2000,
+    "lava": {
+        "initialY": 1500,
+        "lavaSrc": "textures/lava.png"
+    },
+    "player": {
+        "texture": "textures/player.png",
+        "width": 30,
+        "height": 30
+    },
+    "textureScales": [
+        {
+            "texture": "textures/grass.png",
+            "scale": 48
+        },
+        {
+            "texture": "textures/scaffold2.png",
+            "scale": 15
+        }
+    ],
+    "platforms": [
+        {
+            "x": 0,
+            "y": 500,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        },
+        {
+            "x": 200,
+            "y": 450,
+            "width": 500,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 3,
+            "direction": "horizontal",
+            "range": {
+                "start": 200,
+                "end": 500
+            }
+        },
+        {
+            "x": 800,
+            "y": 350,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 1400,
+            "y": 700,
+            "width": 1000,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "breakEffect": "textures/break.png"
+        },
+        {
+            "x": 2400,
+            "y": 800,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 2,
+            "direction": "vertical",
+            "range": {
+                "start": 400,
+                "end": 800
+            }
+        },
+        {
+            "x": 2800,
+            "y": 500,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "duration": 3
+        },
+        {
+            "x": 3150,
+            "y": 450,
+            "width": 600,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png"
+        },
+        {
+            "x": 3600,
+            "y": 700,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png"
+        }
+    ]
+}

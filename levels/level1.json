@@ -21,7 +21,9 @@
             "texture": "textures/gras.png",
             "scale": 48
         },
-        { "texture": "textures/scaffold2.png", "scale": 15 }
+        { "texture": "textures/scaffold2.png", "scale": 15 },
+        { "texture": "textures/scaffold2-upscaled.png", "scale": 60 },
+        {"texture":"textures/scaffold1.png","scale":64}
     ],
     "platforms": [
         {
@@ -47,11 +49,20 @@
         },
         {
             "x": 0,
-            "y": 210,
-            "width": 150,
-            "height": 15,
+            "y": 110,
+            "width": 400,
+            "height": 40,
             "type": "scaffold",
             "tileSrc": "textures/scaffold2.png"
+        },
+        {
+            "type": "breaking",
+            "x": 100,
+            "y": 200,
+            "width": 200,
+            "height": 20,
+            "tileSrc": "textures/scaffold1.png",
+            "breakTime": 3000 
         }
-    ]
+    ] 
 }
