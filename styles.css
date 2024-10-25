@@ -11,3 +11,28 @@ canvas {
     border: 1px solid #000; /* Rahmen um das Canvas */
     background: #87CEEB; /* Hintergrundfarbe */
 }
+
+
+#controls {
+    position: absolute;
+    bottom: 70px; /* Adjust based on your layout */
+    left: 10px; /* Align to the left */
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    padding: 30px; /* Spacing inside the box */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+    width: 120px; /* Fixed width for the controls */
+}
+
+/* Keybind Styles */
+.keybind,.icon {
+    display: flex;
+    align-items: center; /* Center icons and text vertically */
+    margin: 5px 0; /* Space between keybinds */
+}
+
+.key-icon, .icon-icon {
+    width: 30px; /* Set icon size */
+    height: 30px; /* Set icon size */
+    margin-right: 5px; /* Space between icon and text */
+}

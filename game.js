@@ -2,10 +2,13 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // Game Variables
+let timer = 0; // Elapsed time in seconds
+let timerActive = false; // Timer state
 let player;
 let platforms = [];
 let colliders = [];
 let lavaY;
+const endX = 8000;
 let spawn = { x: 50, y: 220 }; // Default spawn point
 let levelWidth; // Set based on loaded level
 let levelHeight; // Set based on loaded level
@@ -13,7 +16,7 @@ let camera; // Declare camera variable
 let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
-
+let highScore = parseFloat(localStorage.getItem('highScore')) || 0;
 // Key status
 const keys = {};
 
@@ -496,10 +499,10 @@ class Checkpoint extends Collider {
  
 // Move Player
 function movePlayer() {
-    if (keys['ArrowRight']) {
+    if (keys['ArrowRight'] || keys["KeyD"]) {
         player.x += player.speed; // Move right
     }
-    if (keys['ArrowLeft']) {
+    if (keys['ArrowLeft'] || keys["KeyA"]) {
         player.x -= player.speed; // Move left
     }
 
@@ -514,7 +517,17 @@ function update() {
 
     // Move player
     movePlayer();
-
+    if (player.x >= endX) {
+         if (timer<highScore)localStorage.setItem('highScore', highScore);
+        timerActive = false; // Stop the timer
+        alert(`Your best Time: ${timer.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
+        // Display end level message or handle level completion here
+        ctx.fillStyle = 'black';
+        ctx.font = '30px Arial';
+        ctx.fillText('Level Completed!', canvas.width / 2 - 100, canvas.height / 2);
+        ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40);
+        return; // Stop further updates
+    }
     // Update camera based on player position
     camera.update(player, canvas.width, canvas.height);
 
@@ -572,13 +585,16 @@ function update() {
             player.lastCheckpoint = checkpoint; // Update player's last touched checkpoint
         }
     }
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, 10, 20); // Display timer at top-left corner
 }
 
 // Capture Key Inputs
 window.addEventListener('keydown', (e) => {
-    keys[e.code] = true; // Key pressed
-    if (e.code === 'Space') {
-        player.jump(); // Jump
+    keys[e.code] = true; 
+    if (e.code === 'Space' || e.code === "ArrowUp"||e.code==="KeyW") {
+        player.jump(); 
     }
 });
 
@@ -590,6 +606,13 @@ window.addEventListener('keyup', (e) => {
 async function init() {
     camera = new Camera(); // Create camera instance
     await loadLevel('level2'); // Load the level
+    timerActive = true; // Start the timer
+    setInterval(() => {
+        if (timerActive) {
+            timer += 1 / 60; // Increment timer by 1/60 seconds
+        }
+    }, 1000 / 60); // Update every frame (assuming 60 FPS)
+
     update();
     setInterval(update, 1000 / 60); // 60 FPS
 }
