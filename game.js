@@ -518,9 +518,17 @@ function update() {
     // Move player
     movePlayer();
     if (player.x >= endX) {
-         if (timer<highScore)localStorage.setItem('highScore', highScore);
+        console.log(`High: ${highScore} seconds`);
+        console.log(`Current: ${timer}`)
+         if (parseFloat(timer) < parseFloat(highScore))
+            {
+                console.log("New high")
+            localStorage.setItem('highScore', timer);
+        }
+        highScore = parseFloat(localStorage.getItem('highScore')) || 0;
+        console.log(`High: ${highScore} seconds`);
         timerActive = false; // Stop the timer
-        alert(`Your best Time: ${highScore} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
+        alert(`Your best Time: ${highScore.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
         // Display end level message or handle level completion here
         ctx.fillStyle = 'black';
         ctx.font = '30px Arial';

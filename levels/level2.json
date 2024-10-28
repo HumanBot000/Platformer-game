@@ -75,8 +75,7 @@
             "width": 200,
             "height": 50,
             "tileSrc": "textures/grass.png",
-            "type": "static",
-            "isStartPlatform": true
+            "type": "static"
         },
         {
             "x": 250,
@@ -167,7 +166,7 @@
             "y": 450,
             "width": 100,
             "height": 50,
-            "tileSrc": "textures/scaffold2.png",
+            "tileSrc": "textures/grass.png",
             "type": "static"
         },
         {
@@ -189,7 +188,7 @@
             "speed": 6,
             "direction": "horizontal",
             "range": {
-                "start": 4500,
+                "start": 4800,
                 "end": 5200
             }
         },
