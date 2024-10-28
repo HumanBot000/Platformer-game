@@ -16,7 +16,9 @@ let camera; // Declare camera variable
 let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
-let highScore = parseFloat(localStorage.getItem('highScore')) || 0;
+
+let currentLevel = "level2"
+let highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`)) || 50000;
 // Key status
 const keys = {};
 
@@ -525,9 +527,9 @@ function update() {
         ctx.fillText('Level Completed!', canvas.width / 2 - 100, canvas.height / 2);
         ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40);
         if (parseFloat(timer) < parseFloat(highScore)) {
-            localStorage.setItem('highScore', timer);
+            localStorage.setItem(`highScore${currentLevel}`, timer);
         }
-        highScore = parseFloat(localStorage.getItem('highScore')) || 0;
+        highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`));
         if (!levelCompleted){
             levelCompleted = true;
             setTimeout(() => {
@@ -616,7 +618,7 @@ window.addEventListener('keyup', (e) => {
 // Initialize Game
 async function init() {
     camera = new Camera(); // Create camera instance
-    await loadLevel('level2'); // Load the level
+    await loadLevel(currentLevel); // Load the level
     timerActive = true; // Start the timer
     setInterval(() => {
         if (timerActive) {
