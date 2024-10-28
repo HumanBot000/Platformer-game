@@ -16,7 +16,7 @@ let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
 let endX = 10**10**10;
-let currentLevel = "gpt"
+let currentLevel = "testing"
 let highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`)) || 50000;
 // Key status
 const keys = {};
@@ -44,8 +44,13 @@ class Player {
             this.texture.src = textureSrc;
         }
     }
-
+    /*
+    LIMITS:
+    Max Jump Height:68
+    Max Jump Width:250
+    */
     update() {
+        //console.log(`${player.x}:${player.y}`);
         // Collision detection variables
         const playerTop = this.y;
         const playerBottom = this.y + this.height;
