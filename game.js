@@ -63,7 +63,13 @@ class Player {
         if (this.y + this.height >= lavaY) {
             this.reset(); // Reset if the player hits lava
         }
-
+        
+        for (let spike of spikes) {
+            if (this.checkCollision(spike)) {
+                this.reset();
+                break; // Stop checking after the first collision
+            }
+        }
         for (let platform of platforms) {
             if (!this.checkCollision(platform)) {
                 continue;
@@ -181,8 +187,8 @@ class Player {
     collectJumpBoost(boostAmount,duration){
         if (!this.jumpBoostActive) {
             this.jumpStrength -= boostAmount; // Increase speed
-            this.jumpBoostBoostActive = true; // Activate speed boost
-            this.jumpBoostDuration = duration; // Set boost duration
+            this.jumpBoostActive = true; // Activate speed boost
+            this.jumpBoostDuration = duration; // Set boost durations
             setTimeout(() => {
                 this.jumpStrength += boostAmount; // Revert speed after duration
                 this.jumpBoostActive = false; // Deactivate speed boost
@@ -208,6 +214,34 @@ class Collider {
         );
     }
 }
+class Spike extends Collider {
+    constructor(x, y) {
+        super(x, y, 16,16);
+        this.x = x;
+        this.y = y;
+        this.width = 16;
+        this.height = 16;
+        this.image = new Image();
+        this.image.src = 'textures/spike.png'; // Make sure you have a spike image in your textures folder
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        if (this.image.complete) {
+            ctx.drawImage(
+                this.image,
+                this.x - cameraOffsetX,
+                this.y - cameraOffsetY,
+                this.width,
+                this.height
+            );
+        } else {
+            // Fallback color if image is not loaded
+            ctx.fillStyle = 'red'; // Color for spikes
+            ctx.fillRect(this.x - cameraOffsetX, this.y - cameraOffsetY, this.width, this.height);
+        }
+    }
+}
+
 
 class Platform extends Collider {
     constructor(x, y, width, height, tileSrc, tileSize) {
@@ -430,6 +464,7 @@ async function loadLevel(level, customSpawn = null) {
 
     speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost, "textures/speed-boost.png"));
     jumpItems = data.jumpItems.map(item => new JumpBoostItem(item.x, item.y, item.duration, item.jumpBoost, "textures/jump-boost.png"));
+    spikes = data.spikes.map(spike => new Spike(spike.x, spike.y));
     checkpoints = data.checkpoints.map(cp => new Checkpoint(
         cp.x,
         cp.y,
@@ -599,7 +634,9 @@ function update() {
 
     // Update camera based on player position
     camera.update(player, canvas.width, canvas.height);
-
+    for (let spike of spikes) {
+        spike.draw(camera.x, camera.y);
+    }
     // Update platforms and colliders, and draw them
     for (let i = platforms.length - 1; i >= 0; i--) {
         const platform = platforms[i];
@@ -660,7 +697,9 @@ function update() {
     }
     ctx.fillStyle = 'black';
     ctx.font = '20px Arial';
-    ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, 10, 20); // Display timer at top-left corner
+    ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, 10, 20); 
+    ctx.fillText(`Speed Boost: ${player.speedBoostActive ? `active (${player.speed})` : "inactive"}`, 10, 40);
+    ctx.fillText(`Jump Boost: ${player.jumpBoostActive ? `active (${Math.abs(player.jumpStrength)})` : "inactive"}`, 10, 60);
 }
 
 // Capture Key Inputs
