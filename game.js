@@ -8,7 +8,6 @@ let player;
 let platforms = [];
 let colliders = [];
 let lavaY;
-const endX = 8200;
 let spawn = { x: 50, y: 220 }; // Default spawn point
 let levelWidth; // Set based on loaded level
 let levelHeight; // Set based on loaded level
@@ -16,7 +15,7 @@ let camera; // Declare camera variable
 let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
-
+let endX = 10**10**10;
 let currentLevel = "level2"
 let highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`)) || 50000;
 // Key status
@@ -32,6 +31,8 @@ class Player {
         this.originalSpeed = this.speed; // Store original speed
         this.speedBoostActive = false; // Track if speed boost is active
         this.speedBoostDuration = 0; // Duration for the boost
+        this.jumpBoostActive = false; // Track if speed boost is active
+        this.jumpBoostDuration = 0; // Duration for the boost
         this.dy = 0;
         this.gravity = 0.5;
         this.jumpStrength = -12;
@@ -173,6 +174,18 @@ class Player {
             setTimeout(() => {
                 this.speed -= boostAmount; // Revert speed after duration
                 this.speedBoostActive = false; // Deactivate speed boost
+            }, duration);
+        }
+    }
+
+    collectJumpBoost(boostAmount,duration){
+        if (!this.jumpBoostActive) {
+            this.jumpStrength -= boostAmount; // Increase speed
+            this.jumpBoostBoostActive = true; // Activate speed boost
+            this.jumpBoostDuration = duration; // Set boost duration
+            setTimeout(() => {
+                this.jumpStrength -= boostAmount; // Revert speed after duration
+                this.jumpBoostActive = false; // Deactivate speed boost
             }, duration);
         }
     }
@@ -367,7 +380,7 @@ async function loadLevel(level, customSpawn = null) {
     // Level boundaries
     levelWidth = data.width || 2000;
     levelHeight = data.height || 1000;
-
+     endX = levelWidth-10;
     // Create platforms
     platforms = data.platforms.map(p => {
         const tileSize = getTextureScale(p.tileSrc, data.textureScales);
@@ -416,6 +429,7 @@ async function loadLevel(level, customSpawn = null) {
     });
 
     speedItems = data.speedItems.map(item => new SpeedItem(item.x, item.y, item.duration, item.speedBoost, "textures/speed-boost.png"));
+    jumpItems = data.jumpItems.map(item => new JumpBoostItem(item.x, item.y, item.duration, item.jumpBoost, "textures/jump-boost.png"));
     checkpoints = data.checkpoints.map(cp => new Checkpoint(
         cp.x,
         cp.y,
@@ -472,7 +486,49 @@ class SpeedItem extends Collider {
     }
 }
 
+class JumpBoostItem extends Collider{
+    constructor(x, y, duration, jumpBoost, imageSrc) {
+        super(x, y, 20, 20); // Set the size of the item
+        this.x = x;
+        this.y = y;
+        this.width = 20;
+        this.height = 20;
+        this.duration = duration; // Duration of speed boost
+        this.jumpBoost = jumpBoost; // Amount of speed boost
+        this.collected = false; // Track if collected
+        // Load the image for the speed item
+        this.image = new Image();
+        this.image.src = imageSrc;
+    }
 
+    update(player) {
+        if (this.collected) return; // Do nothing if already collected
+        // Check for collision with the player
+        if (this.checkCollision(player)) {
+            player.collectJumpBoost(this.jumpBoost, this.duration); // Apply speed boost
+            this.collected = true; // Mark as collected
+        }
+    }
+
+    draw(cameraOffsetX, cameraOffsetY) {
+        if (this.collected) return; // Don't draw if collected
+
+        // Draw the image instead of a rectangle
+        if (this.image.complete) { // Ensure the image is loaded
+            ctx.drawImage(
+                this.image,
+                this.x - cameraOffsetX,
+                this.y - cameraOffsetY,
+                this.width,
+                this.height
+            );
+        } else {
+            // If the image isn’t loaded yet, you could display a temporary placeholder
+            ctx.fillStyle = 'gold';
+            ctx.fillRect(this.x - cameraOffsetX, this.y - cameraOffsetY, this.width, this.height);
+        }
+    }
+}
 class Checkpoint extends Collider {
     constructor(x, y, width, height) {
         super(x, y, width, height);
@@ -590,6 +646,10 @@ function update() {
     for (let speedItem of speedItems) {
         speedItem.update(player); // Update each speed item
         speedItem.draw(camera.x, camera.y); // Draw each speed item
+    }
+    for (let jumpItem of jumpItems){
+        jumpItem.update(player);
+        jumpItem.draw(camera.x,camera.y)
     }
     for (let checkpoint of checkpoints) {
         checkpoint.update(player); // Update checkpoint state
