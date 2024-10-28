@@ -1,14 +1,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
 // Game Variables
+let levelCompleted = false;
 let timer = 0; // Elapsed time in seconds
 let timerActive = false; // Timer state
 let player;
 let platforms = [];
 let colliders = [];
 let lavaY;
-const endX = 8000;
+const endX = 8200;
 let spawn = { x: 50, y: 220 }; // Default spawn point
 let levelWidth; // Set based on loaded level
 let levelHeight; // Set based on loaded level
@@ -48,32 +48,33 @@ class Player {
         const playerBottom = this.y + this.height;
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
-    
+
         // Reset grounded status
         this.grounded = false;
-    
+
         // Apply gravity
         this.dy += this.gravity; // Apply gravity
         this.y += this.dy; // Update player vertical position
-    
+
         // Collision with lava
         if (this.y + this.height >= lavaY) {
             this.reset(); // Reset if the player hits lava
         }
-    
+
         for (let platform of platforms) {
             if (!this.checkCollision(platform)) {
-                continue;}
+                continue;
+            }
             platform.touched = true;
             // Handle vertical collisions
             if (this.dy > 0 && playerBottom <= platform.y + this.dy) {
                 // Colliding from above
                 this.y = platform.y - this.height; // Place player on top of the platform
-                    this.dy = 0; // Reset vertical speed
-                    this.grounded = true;
-                    if (platform instanceof BreakingPlatform) {
-                        platform.update(1000 / 60); // Update the platform's state (assuming 60 FPS)
-                    }
+                this.dy = 0; // Reset vertical speed
+                this.grounded = true;
+                if (platform instanceof BreakingPlatform) {
+                    platform.update(1000 / 60); // Update the platform's state (assuming 60 FPS)
+                }
                 // Move player with the platform based on its direction
                 if (platform instanceof MovingPlatform) {
                     if (platform.direction === "horizontal") {
@@ -83,12 +84,12 @@ class Player {
                     }
                 }
                 continue
-            }  
+            }
             if (this.dy < 0 && playerBottom >= platform.y) {
                 // Colliding from below
-                if (!(platform instanceof ScaffoldPlatform)) { 
-                    this.y = platform.y + platform.height; 
-                    this.dy = 0; 
+                if (!(platform instanceof ScaffoldPlatform)) {
+                    this.y = platform.y + platform.height;
+                    this.dy = 0;
                 }
             } else {
                 // Handle horizontal collisions
@@ -99,7 +100,7 @@ class Player {
                 const isCollidingFromLeft = playerRight > platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
                 const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
                 const isNearLeft = playerRight > platformLeft && playerLeft < platformLeft;
-                const isNearRight = playerLeft < platformRight  && playerRight > platformRight;
+                const isNearRight = playerLeft < platformRight && playerRight > platformRight;
                 if (isCollidingFromLeft || (isNearLeft && isCollidingFromLeft)) {
                     this.x = platformLeft - this.width; // Move player to the left of the platform
                 } else if (isCollidingFromRight || (isNearRight && isCollidingFromRight)) {
@@ -107,7 +108,7 @@ class Player {
                 }
             }
         }
-    
+
         // Draw player
         if (this.texture && this.texture.complete) {
             ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
@@ -116,7 +117,7 @@ class Player {
             ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
         }
     }
-    
+
 
 
 
@@ -154,13 +155,13 @@ class Player {
     reset() {
         if (this.lastCheckpoint) {
             loadLevel("level2", { x: this.lastCheckpoint.x, y: this.lastCheckpoint.y });
-            this.dy = 0; 
+            this.dy = 0;
         } else {
             loadLevel("level2", null);
         }
     }
-    
-    
+
+
 
     collectSpeedBoost(boostAmount, duration) {
         if (!this.speedBoostActive) {
@@ -298,7 +299,7 @@ class BreakingPlatform extends Platform {
         if (this.broken) return; // Do nothing if the platform is broken
 
         // Increment timer
-        if (this.touched)this.timer += deltaTime;
+        if (this.touched) this.timer += deltaTime;
 
         // Check if the timer exceeds the break time
         if (this.timer >= this.breakTime) {
@@ -342,7 +343,7 @@ function getTextureScale(textureSrc, textureScales) {
 // Load Level from JSON
 // Load Level from JSON
 async function loadLevel(level, customSpawn = null) {
-    const response = await fetch(`levels/${level}.json`);
+    const response = await fetch(`./levels/${level}.json`);
     const data = await response.json();
 
     // Set spawn point
@@ -399,7 +400,7 @@ async function loadLevel(level, customSpawn = null) {
                 p.height,
                 p.tileSrc,
                 tileSize,
-                p.breakTime 
+                p.breakTime
             );
         }
         return new StaticPlatform(
@@ -474,8 +475,8 @@ class Checkpoint extends Collider {
     constructor(x, y, width, height) {
         super(x, y, width, height);
         this.touched = false; // Track if the checkpoint has been touched
-        this.touchedImage = new Image(); 
-        this.untouchedImage = new Image(); 
+        this.touchedImage = new Image();
+        this.untouchedImage = new Image();
         this.touchedImage.src = "textures/checkpoint-touched.png"; // Image for touched checkpoint
         this.untouchedImage.src = "textures/checkpoint-untouched.png"; // Image for untouched checkpoint
     }
@@ -496,7 +497,7 @@ class Checkpoint extends Collider {
 }
 
 
- 
+
 // Move Player
 function movePlayer() {
     if (keys['ArrowRight'] || keys["KeyD"]) {
@@ -518,24 +519,26 @@ function update() {
     // Move player
     movePlayer();
     if (player.x >= endX) {
-        console.log(`High: ${highScore} seconds`);
-        console.log(`Current: ${timer}`)
-         if (parseFloat(timer) < parseFloat(highScore))
-            {
-                console.log("New high")
-            localStorage.setItem('highScore', timer);
-        }
-        highScore = parseFloat(localStorage.getItem('highScore')) || 0;
-        console.log(`High: ${highScore} seconds`);
-        timerActive = false; // Stop the timer
-        alert(`Your best Time: ${highScore.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40)
-        // Display end level message or handle level completion here
+        timerActive = false;
         ctx.fillStyle = 'black';
         ctx.font = '30px Arial';
         ctx.fillText('Level Completed!', canvas.width / 2 - 100, canvas.height / 2);
         ctx.fillText(`Time: ${timer.toFixed(2)} seconds`, canvas.width / 2 - 100, canvas.height / 2 + 40);
-        return; // Stop further updates
+        if (parseFloat(timer) < parseFloat(highScore)) {
+            localStorage.setItem('highScore', timer);
+        }
+        highScore = parseFloat(localStorage.getItem('highScore')) || 0;
+        if (!levelCompleted){
+            levelCompleted = true;
+            setTimeout(() => {
+                alert(`Your best Time: ${highScore.toFixed(2)} seconds`);
+                console.log("reload");
+                location.reload();
+            }, 200); 
+        }
+        return;
     }
+
     // Update camera based on player position
     camera.update(player, canvas.width, canvas.height);
 
@@ -545,8 +548,8 @@ function update() {
         const deltaTime = 1000 / 60; // Assuming 60 FPS, calculate delta time
         platform.update(deltaTime); // Update the platform's state
         if (platform.broken) {
-            platforms.splice(i, 1); 
-            continue; 
+            platforms.splice(i, 1);
+            continue;
         }
         // Only draw if within visible bounds (for optimization)
         if (platform.y + platform.height > camera.y && platform.y < camera.y + canvas.height &&
@@ -600,9 +603,9 @@ function update() {
 
 // Capture Key Inputs
 window.addEventListener('keydown', (e) => {
-    keys[e.code] = true; 
-    if (e.code === 'Space' || e.code === "ArrowUp"||e.code==="KeyW") {
-        player.jump(); 
+    keys[e.code] = true;
+    if (e.code === 'Space' || e.code === "ArrowUp" || e.code === "KeyW") {
+        player.jump();
     }
 });
 

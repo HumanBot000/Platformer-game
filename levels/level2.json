@@ -253,7 +253,7 @@
             "y": 400,
             "width": 700,
             "height": 50,
-            "tileSrc": "textures/scaffold2.png",
+            "tileSrc": "textures/grass.png",
             "type": "moving",
             "speed": 3,
             "direction": "horizontal",
