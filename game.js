@@ -620,7 +620,7 @@ function update() {
         if (parseFloat(timer) < parseFloat(highScore)) {
             localStorage.setItem(`highScore${currentLevel}`, timer);
         }
-        highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`));
+        highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`))|| 50000;
         if (!levelCompleted){
             levelCompleted = true;
             setTimeout(() => {
