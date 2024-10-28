@@ -1,0 +1,422 @@
+{
+    "spawn": {
+        "x": 100,
+        "y": 300
+    },
+    "width": 12000,
+    "height": 2000,
+    "speedItems": [
+        {
+            "x": 300,
+            "y": 340,
+            "duration": 5000,
+            "speedBoost": 3
+        },
+        {
+            "x": 4110,
+            "y": 570,
+            "duration": 1000,
+            "speedBoost": 3
+        },
+        {
+            "x": 5921,
+            "y": 275,
+            "duration": 5000,
+            "speedBoost": 7
+        },
+        {
+            "x": 7500,
+            "y": 300,
+            "duration": 1000,
+            "speedBoost": 10
+        }
+    ],
+    "jumpItems":[
+        {
+            "x":9820,
+            "y": 540,
+            "duration":3000,
+            "jumpBoost":12
+        },
+        {
+            "x":11100,
+            "y": 480,
+            "duration":3000,
+            "jumpBoost":12
+        }
+    ],
+    "checkpoints": [
+        {
+            "x": 2274,
+            "y": 320,
+            "width": 20,
+            "height": 20
+        },
+        {
+            "x": 5800,
+            "y": 470,
+            "width": 20,
+            "height": 20
+        },
+        {
+            "x": 8000,
+            "y": 400,
+            "width": 20,
+            "height": 20
+        },
+        {
+            "x": 10100,
+            "y": 370,
+            "width": 20,
+            "height": 20
+        }
+    ],
+    "lava": {
+        "initialY": 1500,
+        "lavaSrc": "textures/lava.png"
+    },
+    "player": {
+        "texture": "textures/player.png",
+        "width": 30,
+        "height": 30
+    },
+    "textureScales": [
+        {
+            "texture": "textures/grass.png",
+            "scale": 48
+        },
+        {
+            "texture": "textures/scaffold2.png",
+            "scale": 15
+        },
+        {
+            "texture": "textures/scaffold1.png",
+            "scale": 15
+        }
+    ],
+    "platforms": [
+        {
+            "x": 0,
+            "y": 500,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 250,
+            "y": 450,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 3,
+            "direction": "horizontal",
+            "range": {
+                "start": 250,
+                "end": 650
+            }
+        },
+        {
+            "x": 700,
+            "y": 350,
+            "width": 1000,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 1800,
+            "y": 500,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 2,
+            "direction": "vertical",
+            "range": {
+                "start": 400,
+                "end": 600
+            }
+        },
+        {
+            "x": 2100,
+            "y": 350,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 2700,
+            "y": 600,
+            "width": 80,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 300
+        },
+        {
+            "x": 2800,
+            "y": 600,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 2900,
+            "y": 500,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 8,
+            "direction": "horizontal",
+            "range": {
+                "start": 2900,
+                "end": 3800
+            }
+        },
+        {
+            "x": 3900,
+            "y": 450,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 4100,
+            "y": 600,
+            "width": 700,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 6000
+        },
+        {
+            "x": 4700,
+            "y": 600,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 6,
+            "direction": "horizontal",
+            "range": {
+                "start": 4800,
+                "end": 5200
+            }
+        },
+        {
+            "x": 5100,
+            "y": 480,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 5500,
+            "y": 600,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 1500
+        },
+        {
+            "x": 5700,
+            "y": 500,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 5900,
+            "y": 400,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 0.3,
+            "direction": "vertical",
+            "range": {
+                "start": 300,
+                "end": 400
+            }
+        },
+        {
+            "x": 6300,
+            "y": 500,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 6700,
+            "y": 450,
+            "width": 150,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 4000
+        },
+        {
+            "x": 7000,
+            "y": 400,
+            "width": 700,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 3,
+            "direction": "horizontal",
+            "range": {
+                "start": 6900,
+                "end": 7300
+            }
+        },
+        {
+            "x": 7600,
+            "y": 550,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 7900,
+            "y": 500,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 8300,
+            "y": 450,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 4,
+            "direction": "horizontal",
+            "range": {
+                "start": 8200,
+                "end": 8500
+            }
+        },
+        {
+            "x": 8400,
+            "y": 350,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 8400,
+            "y": 250,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 8400,
+            "y": 150,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 8400,
+            "y": 50,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 8400,
+            "y": -50,
+            "width": 500,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 9000,
+            "y": -50,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 12,
+            "direction": "vertical",
+            "range": {
+                "start": -50,
+                "end": 1000
+            }
+        },
+        {
+            "x": 9500,
+            "y": 600,
+            "width": 500,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        },
+        {
+            "x": 10000,
+            "y": 400,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 10500,
+            "y": 450,
+            "width": 300,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "moving",
+            "speed": 5,
+            "direction": "horizontal",
+            "range": {
+                "start": 10400,
+                "end": 10800
+            }
+        },
+        {
+            "x": 11000,
+            "y": 500,
+            "width": 400,
+            "height": 50,
+            "tileSrc": "textures/scaffold1.png",
+            "type": "breaking",
+            "breakTime": 3000
+        },
+        {
+            "x": 11500,
+            "y": 300,
+            "width": 200,
+            "height": 50,
+            "tileSrc": "textures/grass.png",
+            "type": "static"
+        },
+        {
+            "x": 11900,
+            "y": 200,
+            "width": 100,
+            "height": 50,
+            "tileSrc": "textures/scaffold2.png",
+            "type": "scaffold"
+        }
+    ]
+}

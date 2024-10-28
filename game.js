@@ -16,7 +16,7 @@ let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
 let endX = 10**10**10;
-let currentLevel = "level2"
+let currentLevel = "gpt"
 let highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`)) || 50000;
 // Key status
 const keys = {};
@@ -157,10 +157,10 @@ class Player {
 
     reset() {
         if (this.lastCheckpoint) {
-            loadLevel("level2", { x: this.lastCheckpoint.x, y: this.lastCheckpoint.y });
+            loadLevel(currentLevel, { x: this.lastCheckpoint.x, y: this.lastCheckpoint.y });
             this.dy = 0;
         } else {
-            loadLevel("level2", null);
+            loadLevel(currentLevel, null);
         }
     }
 
@@ -184,7 +184,7 @@ class Player {
             this.jumpBoostBoostActive = true; // Activate speed boost
             this.jumpBoostDuration = duration; // Set boost duration
             setTimeout(() => {
-                this.jumpStrength -= boostAmount; // Revert speed after duration
+                this.jumpStrength += boostAmount; // Revert speed after duration
                 this.jumpBoostActive = false; // Deactivate speed boost
             }, duration);
         }
@@ -567,7 +567,7 @@ function movePlayer() {
 
     // Limit player position to prevent leaving the canvas
     player.x = Math.max(0, player.x);
-    player.x = Math.min(levelWidth - player.width, player.x); // Keep player within level bounds
+    player.x = Math.min(levelWidth, player.x); // Keep player within level bounds
 }
 
 // Update Game State
