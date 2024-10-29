@@ -220,7 +220,6 @@ class Platform extends Collider {
         super(x, y, platformWidth, platformHeight); // Use platformWidth for collider dimensions
         colliders.push(this); // Add platform to colliders
         this.activeCollider = true; // Ensure activeCollider is true
-        console.log("Platform added:", this); // Debugging line
         this.tileSize = tileSize;
         this.tile = new Image();
         this.tile.src = tileSrc;
@@ -228,6 +227,7 @@ class Platform extends Collider {
 
     draw(cameraOffsetX, cameraOffsetY) {
         const numTiles = Math.ceil(this.width / this.tileSize);
+        super.width = numTiles*this.tileSize;
         for (let i = 0; i < numTiles; i++) {
             ctx.drawImage(this.tile, this.x - cameraOffsetX + i * this.tileSize, this.y - cameraOffsetY, this.tileSize, this.tileSize);
         }
