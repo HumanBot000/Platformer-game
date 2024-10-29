@@ -76,7 +76,6 @@ class Player {
             FALL_THRESHOLD = closestPlatform.y + closestPlatform.height + 2000; // Add a buffer
         }
     }
-    
     update() {
         // Collision detection variables
         const playerTop = this.y;   
@@ -110,6 +109,7 @@ class Player {
     
             // Handle vertical collisions
             if (playerBottom <= colliderBottom && playerBottom + this.dy >= colliderTop) {
+                console.log("up")
                 // Colliding from above
                 this.y = colliderTop - this.height; // Place player on top of the collider
                 this.dy = 0; // Reset vertical speed
@@ -128,21 +128,22 @@ class Player {
                     }
                 }
             } else if (playerTop < colliderBottom && playerTop + this.dy <= colliderBottom) {
+                console.log("down")
                 // Colliding from below (if necessary)
-                this.y = colliderBottom; // Position below the collider
-                this.dy = 0; // Reset vertical speed
+                this.y = colliderBottom; 
+                this.dy = 0; 
             } else {
                 // Handle horizontal collisions
                 const isCollidingFromLeft = playerRight > colliderLeft && playerLeft < colliderLeft && playerBottom > colliderTop && playerTop < colliderBottom;
                 const isCollidingFromRight = playerLeft < colliderRight && playerRight > colliderRight && playerBottom > colliderTop && playerTop < colliderBottom;
-    
-                // Handle collision from the sides
                 if (isCollidingFromLeft) {
-                    this.x = colliderLeft - this.width; // Move player to the left of the collider
-                    this.dy = 0; // Reset vertical speed to avoid jumping while colliding
+                    console.log("left")
+                    this.x = colliderLeft - this.width; 
+                    this.dy = 0; 
                 } else if (isCollidingFromRight) {
-                    this.x = colliderRight; // Move player to the right of the collider
-                    this.dy = 0; // Reset vertical speed to avoid jumping while colliding
+                    console.log("right")
+                    this.x = colliderRight; 
+                    this.dy = 0; 
                 }
             }
         }
@@ -336,20 +337,23 @@ function generatePlatform() {
     const minDeltaX = 80; // Minimum gap between platforms
     
     // Adjust minDeltaY based on whether the last platform is a moving platform
-    const minDeltaY = lastPlatform instanceof MovingPlatform ? -100 : -300; // Example: less vertical space for moving platforms
+    const minDeltaY = -300; // Example: less vertical space for moving platforms
 
     // Random height offset for the next platform
     let deltaY = Math.floor(Math.random() * 401) - 200;
     deltaY = Math.min(MAX_JUMP_HEIGHT, deltaY);
     deltaY = Math.max(minDeltaY, deltaY);
+    
     // Calculate max horizontal distance based on deltaY
     const maxDeltaX = calculateMaxHorizontalDistance(deltaY);
 
-    // Calculate the horizontal distance while considering minDeltaX
-    const deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
-
-    // Set the starting position for the new platform
-    lastX += minDeltaX; // Ensure new platform starts after the last one
+    // Ensure the deltaX is at least minDeltaX
+    deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
+    if (lastPlatform instanceof MovingPlatform){
+        deltaX += lastPlatform.width;
+    }
+    // Set the starting position for the new platform, ensuring it respects minDeltaX
+    lastX += deltaX; // Ensure new platform starts after the last one
 
     // Determine whether to create a normal or moving platform
     const createMovingPlatform = Math.random() < 0.3; // 30% chance for a moving platform
@@ -373,8 +377,6 @@ function generatePlatform() {
                 end: lastY - deltaY + (Math.random() * 100 + 50)
             };
         }
-    
-        // Create the moving platform
         newPlatform = new MovingPlatform(
             lastX,
             lastY - deltaY,
@@ -386,11 +388,9 @@ function generatePlatform() {
             direction,
             range
         );
-    }
-    else if (Math.random() < 0.3){
+    } else if (Math.random() < 0.3) {
         newPlatform = new DisappearingPlatform(lastX, lastY - deltaY, 100, 20);
-    } 
-    else {
+    } else {
         // Create a normal platform
         const platformWidth = Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth;
         newPlatform = new Platform(lastX, lastY - deltaY, platformWidth);
@@ -405,6 +405,7 @@ function generatePlatform() {
         generatePlatform(); // Retry generating a platform if the path is not clear
     }
 }
+
 
 
 class MovingPlatform extends Platform {
