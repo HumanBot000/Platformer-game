@@ -8,29 +8,34 @@ let colliders = []; // New array for colliders
 let camera;
 const spawn = { x: 0, y: 220 };
 const keys = {};
-const FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
+let FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
 
 // Constants for jump limits
 let MAX_JUMP_HEIGHT = 138;
-let MAX_JUMP_LENGTH = 220;
+function calculateMaxHorizontalDistance(deltaY) {
+    // Gravitationskonstanten
+    const gravity = 0.5;          // Gravitationsbeschleunigung pro Frame
+    const jumpStrength = -12;     // Anfangsgeschwindigkeit beim Sprung
+    const playerSpeed = 5;        // Horizontale Geschwindigkeit in Pixel pro Frame
+    
+    // Positives deltaY entspricht einer Plattform höher als der aktuellen Position
+    const adjustedDeltaY = -deltaY; // Anpassung der Höhe basierend auf der Y-Achse
 
-function calculateJumpLength(height) {
-    const g = 9.81; // Gravity constant
-    const maxJumpVelocity = Math.sqrt(2 * g * MAX_JUMP_HEIGHT); // Initial velocity for max height
-    const angle = Math.PI / 4; // Optimal angle for range is 45 degrees
+    // Berechnung der Diskriminante
+    const discriminant = Math.pow(jumpStrength, 2) + 2 * gravity * adjustedDeltaY;
 
-    // Calculate the time to reach max height
-    const timeToMaxHeight = maxJumpVelocity / g;
+    // Wenn die Diskriminante negativ ist, ist der Sprung unmöglich
+    if (discriminant < 0) {
+        return 0;
+    }
 
-    // Total time of flight (up and down)
-    const totalTime = 2 * timeToMaxHeight;
+    // Berechnung der Zeit in der Luft, um die Höhe zu erreichen
+    const timeInAir = (-jumpStrength + Math.sqrt(discriminant)) / gravity;
 
-    // Calculate horizontal distance (range) using optimal angle
-    const horizontalVelocity = maxJumpVelocity * Math.cos(angle); // Horizontal component of velocity
-    const jumpLength = horizontalVelocity * totalTime; // Total horizontal distance
-
-    // Adjust jump length based on the proportion of actual height to max height
-    return Math.max(0, jumpLength * (height < MAX_JUMP_HEIGHT ? (1 - (height / MAX_JUMP_HEIGHT)) : 0));
+    // Maximale horizontale Distanz berechnen
+    const maxDistance = playerSpeed * timeInAir;
+    
+    return maxDistance;
 }
 
 
@@ -53,8 +58,6 @@ class Player {
         this.grounded = false;
         this.texture = new Image();
         this.texture.src = textureSrc;
-        MAX_JUMP_HEIGHT -= height; // Adjust max jump height
-        MAX_JUMP_LENGTH -= width;   // Adjust max jump length based on player width
     }
 
     update() {
@@ -141,7 +144,7 @@ class Player {
 
     jump() {
         if (this.grounded) {
-            this.dy = this.jumpStrength; // This can be adjusted to increase jump strength
+            this.dy = this.jumpStrength; 
             this.grounded = false;
         }
     }
@@ -150,6 +153,7 @@ class Player {
         this.x = spawn.x;
         this.y = spawn.y;
         this.dy = 0;
+        FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
     }
 }
 
@@ -206,41 +210,37 @@ function generatePlatform() {
     const lastPlatform = platforms[platforms.length - 1];
     const lastX = lastPlatform ? lastPlatform.x : spawn.x;
     const lastY = lastPlatform ? lastPlatform.y : spawn.y;
+    const lastPlatformWidth = lastPlatform ? lastPlatform.width : 0;
 
-    // Set minimum and maximum platform width
-    const minPlatformWidth = 50; // Minimum width
-    const maxPlatformWidth = 200; // Maximum width
+    // Mindest- und Maximalwerte für die Plattformen
+    const minPlatformWidth = 50; // Minimale Plattformbreite
+    const maxPlatformWidth = 200; // Maximale Plattformbreite
+    const minDeltaX = 80; // Mindestabstand in X-Richtung von der rechten Seite der letzten Plattform
 
-    // Randomize platform width between min and max, ensuring it's divisible by 50
-    let platformWidth = Math.random() * (maxPlatformWidth - minPlatformWidth) + minPlatformWidth;
-    platformWidth = Math.floor(platformWidth / 50) * 50; // Ensure width is a multiple of 50
+    // Zufälliger Höhenversatz (deltaY) für die nächste Plattform im Bereich [-200, +200]
+    let deltaY = Math.floor(Math.random() * 401) - 200;
+    
+    // Berechnung der maximalen horizontalen Distanz basierend auf dem angepassten deltaY-Wert
+    const maxDeltaX = calculateMaxHorizontalDistance(deltaY);
 
-    // Calculate next platform position
-    let nextX = lastX + 200 + Math.random() * 150; // Increased jump distance for horizontal placement
-    nextX = Math.floor(nextX / 50) * 50; // Adjust nextX to be a multiple of 50
+    // Berechnen des horizontalen Abstands, wobei minDeltaX berücksichtigt wird
+    const deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
+    console.log(`DeltaY: ${deltaY};DeltaX: ${deltaX}`);
+    
+    // Positionierung der neuen Plattform relativ zur letzten Plattform, um Überschneidungen zu vermeiden
+    const newPlatformX = lastX + lastPlatformWidth + deltaX; // Startposition links von der neuen Plattform
+    const newPlatformY = lastY - deltaY; // Veränderte Berechnung für die Y-Position
 
-    // Calculate jump length based on the last platform height
-    const jumpLength = calculateJumpLength(lastY - spawn.y); // Calculate jump length based on height difference
+    // Zufällige Breite der neuen Plattform im Bereich von min bis max
+    const platformWidth = Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth;
 
-    // Randomize vertical position for platform spacing, ensuring it's within jump capabilities
-    let nextY = lastY - (Math.random() * (MAX_JUMP_HEIGHT - 40) + 40); // Random vertical offset
-
-    // Ensure the nextY is within a reasonable range
-    if (nextY < spawn.y - MAX_JUMP_HEIGHT) {
-        nextY = lastY - MAX_JUMP_HEIGHT; // Place at max jump height limit
-    } else if (nextY < 0) {
-        nextY = 0; // Prevent platforms from being placed below the ground
-    }
-
-    // Ensure the gap is not too large based on calculated jump length
-    const heightDifference = lastY - nextY;
-    if (heightDifference > jumpLength) {
-        nextY = lastY - jumpLength; // Adjust nextY to fit jump length constraints
-    }
-
-    const newPlatform = new Platform(nextX, nextY, platformWidth); // Create new platform
+    // Neue Plattform erstellen und zur Liste hinzufügen
+    const newPlatform = new Platform(newPlatformX, newPlatformY, platformWidth);
     platforms.push(newPlatform);
+    FALL_THRESHOLD=newPlatform.y+500;
 }
+
+
 
 
 
