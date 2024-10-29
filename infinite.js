@@ -9,7 +9,7 @@ let camera;
 const spawn = { x: 0, y: 220 };
 const keys = {};
 let FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
-
+let score = 0;
 // Constants for jump limits
 let MAX_JUMP_HEIGHT = 138;
 function calculateMaxHorizontalDistance(deltaY) {
@@ -62,8 +62,8 @@ class Player {
 
     update() {
         // Collision detection variables
-        const playerTop = this.y;
-        const playerBottom = this.y + this.height;
+        const playerTop = this.y;   //360
+        const playerBottom = this.y + this.height; //330
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
     
@@ -89,22 +89,24 @@ class Player {
             const colliderRight = collider.x + collider.width;
     
             // Handle vertical collisions
-            if (this.dy > 0 && playerBottom <= colliderBottom && playerBottom + this.dy >= colliderTop) {
+            if (playerBottom <= colliderBottom && playerBottom + this.dy >= colliderTop) {
                 // Colliding from above
                 this.y = colliderTop - this.height; // Place player on top of the collider
                 this.dy = 0; // Reset vertical speed
                 this.grounded = true; // Set grounded status
-            } else if (this.dy < 0 && playerTop < colliderBottom && playerTop + this.dy <= colliderBottom) {
+            } else if (playerTop < colliderBottom && playerTop + this.dy <= colliderBottom) {
                 // Colliding from below (if necessary)
                 this.y = colliderBottom; // Position below the collider
                 this.dy = 0; // Reset vertical speed
+                console.log("Bottom Colission");
             } else {
                 // Handle horizontal collisions
-                const isCollidingFromLeft = playerRight > colliderLeft && playerLeft < colliderLeft && playerBottom > colliderTop && playerTop < colliderBottom;
+                const isCollidingFromLeft = playerRight> colliderLeft && playerLeft < colliderLeft && playerBottom >= colliderTop && playerTop <= colliderBottom;
                 const isCollidingFromRight = playerLeft < colliderRight && playerRight > colliderRight && playerBottom > colliderTop && playerTop < colliderBottom;
     
                 // Handle collision from the sides
                 if (isCollidingFromLeft) {
+                    console.log("Left colission");
                     this.x = colliderLeft - this.width; // Move player to the left of the collider
                     this.dy = 0; // Reset vertical speed to avoid jumping while colliding
                 } else if (isCollidingFromRight) {
@@ -176,7 +178,7 @@ class Collider {
 }
 
 class Platform extends Collider {
-    constructor(x, y, width = 100, height = 20, tileSrc = './textures/grass.png', tileSize = 48) {
+    constructor(x, y, width = 100, height = 50, tileSrc = './textures/grass.png', tileSize = 48) {
         const platformWidth = Math.round(width); // Ensure width is rounded as needed
         super(x, y, platformWidth, height); // Use platformWidth for collider dimensions
         colliders.push(this); // Add platform to colliders
@@ -219,7 +221,7 @@ function generatePlatform() {
 
     // Zufälliger Höhenversatz (deltaY) für die nächste Plattform im Bereich [-200, +200]
     let deltaY = Math.floor(Math.random() * 401) - 200;
-    
+    deltaY = Math.min(MAX_JUMP_HEIGHT,deltaY);
     // Berechnung der maximalen horizontalen Distanz basierend auf dem angepassten deltaY-Wert
     const maxDeltaX = calculateMaxHorizontalDistance(deltaY);
 
@@ -237,7 +239,7 @@ function generatePlatform() {
     // Neue Plattform erstellen und zur Liste hinzufügen
     const newPlatform = new Platform(newPlatformX, newPlatformY, platformWidth);
     platforms.push(newPlatform);
-    FALL_THRESHOLD=newPlatform.y+500;
+    FALL_THRESHOLD=newPlatform.y+5000;
 }
 
 
@@ -265,6 +267,11 @@ function movePlayer() {
     if (keys['ArrowRight'] || keys["KeyD"]) player.x += player.speed;
     if (keys['ArrowLeft'] || keys["KeyA"]) player.x -= player.speed;
     player.x = Math.max(0, player.x); // Prevent leaving the canvas
+    score = player.x /100;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Score: ${parseInt(score)}`, 10, 20); 
 }
 
 // Update Game State
