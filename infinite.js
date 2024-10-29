@@ -40,12 +40,7 @@ function calculateMaxHorizontalDistance(deltaY) {
 
 
 
-// Player Class
 class Player {
-    /*LIMITS:
-    Max Jump height (vertical):138
-    Max Jump length (horizontal):220
-    */
     constructor(x, y, width = 30, height = 30, textureSrc = './textures/player.png') {
         this.x = x;
         this.y = y;
@@ -60,16 +55,38 @@ class Player {
         this.texture.src = textureSrc;
     }
 
+    updateClosestPlatform() {
+        let closestPlatform = null; // Variable to store the closest platform
+        let minDistance = Infinity; // Start with a very large number
+    
+        // Loop through all platforms to find the closest one
+        platforms.forEach(platform => {
+            // Calculate the distance from the player to the platform's x position
+            const distance = Math.abs(platform.x - this.x);
+    
+            // Check if this platform is the closest one so far
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPlatform = platform; // Update the closest platform
+            }
+        });
+    
+        // Now you can use the closestPlatform for whatever you need
+        if (closestPlatform) {
+            FALL_THRESHOLD = closestPlatform.y + closestPlatform.height + 2000; // Add a buffer
+        }
+    }
+    
     update() {
         // Collision detection variables
-        const playerTop = this.y;   //360
-        const playerBottom = this.y + this.height; //330
+        const playerTop = this.y;   
+        const playerBottom = this.y + this.height; 
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
-    
+        
         // Reset grounded status
         this.grounded = false;
-    
+        
         // Apply gravity
         this.dy += this.gravity; // Apply gravity
         this.y += this.dy; // Update player vertical position
@@ -79,25 +96,35 @@ class Player {
             this.respawn();
         }
     
-        // Collision with all colliders (platforms, etc.)
+        // Collision with all active colliders
         for (let collider of colliders) {
-            if (!this.checkCollision(collider)) continue;
-        
+            // Only check for active colliders
+            if (!collider.activeCollider || !this.checkCollision(collider)) continue;
+    
             const colliderTop = collider.y;
             const colliderBottom = collider.y + collider.height;
-            const colliderLeft = collider.x -collider.width;
-            const colliderRight = collider.x;
-        
+            const colliderLeft = collider.x;
+            const colliderRight = collider.x + collider.width;
+    
             // Handle vertical collisions
             if (playerBottom <= colliderBottom && playerBottom + this.dy >= colliderTop) {
                 // Colliding from above
                 this.y = colliderTop - this.height; // Place player on top of the collider
                 this.dy = 0; // Reset vertical speed
                 this.grounded = true; // Set grounded status
-        
-                // Check if the platform is a MovingPlatform
+    
+                // Adjust player position based on moving platform
                 if (collider instanceof MovingPlatform) {
-                    this.x += collider.movingForward ? collider.speed : -collider.speed; // Apply platform's horizontal speed
+                    const platformMovement = collider.movingForward ? collider.speed : -collider.speed;
+    
+                    // Adjust player's position only when grounded
+                    if (this.grounded) {
+                        if (collider.direction === "vertical") {
+                            this.y += platformMovement; 
+                        } else {
+                            this.x += platformMovement; 
+                        }
+                    }
                 }
             } else if (playerTop < colliderBottom && playerTop + this.dy <= colliderBottom) {
                 // Colliding from below (if necessary)
@@ -107,7 +134,7 @@ class Player {
                 // Handle horizontal collisions
                 const isCollidingFromLeft = playerRight > colliderLeft && playerLeft < colliderLeft && playerBottom > colliderTop && playerTop < colliderBottom;
                 const isCollidingFromRight = playerLeft < colliderRight && playerRight > colliderRight && playerBottom > colliderTop && playerTop < colliderBottom;
-        
+    
                 // Handle collision from the sides
                 if (isCollidingFromLeft) {
                     this.x = colliderLeft - this.width; // Move player to the left of the collider
@@ -118,23 +145,7 @@ class Player {
                 }
             }
         }
-        
-        // Check moving platforms adjacent to the player
-        for (let platform of platforms) {
-            if (platform instanceof MovingPlatform) {
-                const isBesidePlatform = playerRight > platform.x && playerLeft < platform.x + platform.width && 
-                                         playerBottom > platform.y && playerTop < platform.y + platform.height;
-        
-                if (isBesidePlatform) {
-                    if (platform.direction === "horizontal") {
-                        this.x += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's horizontal speed
-                    } else {
-                        this.y += platform.movingForward ? platform.speed : -platform.speed; // Apply platform's vertical speed
-                    }
-                }
-            }
-        }
-        
+    
         // Draw player
         if (this.texture && this.texture.complete) {
             ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
@@ -144,24 +155,29 @@ class Player {
         }
     }
     
-
+    
+    
     checkCollision(platform) {
         const playerTop = this.y;
         const playerBottom = this.y + this.height;
         const playerLeft = this.x;
         const playerRight = this.x + this.width;
+    
         const platformTop = platform.y;
         const platformBottom = platform.y + platform.height;
         const platformLeft = platform.x;
-        const platformRight = platform.x + platform.width + 50;
+        const platformRight = platform.x + platform.width;
+    
         const isCollidingFromAbove = playerBottom >= platformTop && playerTop < platformTop && playerRight > platformLeft && playerLeft < platformRight;
         const isCollidingFromBelow = playerTop <= platformBottom && playerBottom > platformBottom && playerRight > platformLeft && playerLeft < platformRight;
-
+        
+        // Check horizontal collisions
         const isCollidingFromLeft = playerRight >= platformLeft && playerLeft < platformLeft && playerBottom > platformTop && playerTop < platformBottom;
         const isCollidingFromRight = playerLeft < platformRight && playerRight > platformRight && playerBottom > platformTop && playerTop < platformBottom;
-
+    
         return isCollidingFromAbove || isCollidingFromBelow || isCollidingFromLeft || isCollidingFromRight;
     }
+    
 
     jump() {
         if (this.grounded) {
@@ -196,12 +212,15 @@ class Collider {
     }
 }
 
+
 class Platform extends Collider {
     constructor(x, y, width = 100, height = 50, tileSrc = './textures/grass.png', tileSize = 48) {
         const platformWidth = Math.round(width); // Ensure width is rounded as needed
-        super(x, y, platformWidth, height); // Use platformWidth for collider dimensions
+        const platformHeight = height; // Ensure height matches visual height
+        super(x, y, platformWidth, platformHeight); // Use platformWidth for collider dimensions
         colliders.push(this); // Add platform to colliders
-
+        this.activeCollider = true; // Ensure activeCollider is true
+        console.log("Platform added:", this); // Debugging line
         this.tileSize = tileSize;
         this.tile = new Image();
         this.tile.src = tileSrc;
@@ -215,6 +234,7 @@ class Platform extends Collider {
     }
 }
 
+
 // Camera Class
 class Camera {
     constructor() {
@@ -227,6 +247,35 @@ class Camera {
         this.y = player.y - canvasHeight / 2 + player.height / 2;
     }
 }
+function isPathClear(newPlatform) {
+    const buffer = 50; // Buffer space above the platform
+
+    // Define the area of the new platform including the buffer
+    const newPlatformArea = {
+        x: newPlatform.x,
+        y: newPlatform.y - buffer,
+        width: newPlatform.width,
+        height: newPlatform.height + buffer
+    };
+
+    // Check against all existing platforms
+    for (let platform of platforms) {
+        if (
+            newPlatformArea.x < platform.x + platform.width &&
+            newPlatformArea.x + newPlatformArea.width > platform.x &&
+            newPlatformArea.y < platform.y + platform.height &&
+            newPlatformArea.y + newPlatformArea.height > platform.y
+        ) {
+            // There is an overlap
+            return false;
+        }
+    }
+
+    // No overlaps found, path is clear
+    return true;
+}
+
+
 function generatePlatform() {
     const lastPlatform = platforms[platforms.length - 1];
     let lastX = spawn.x;
@@ -239,33 +288,33 @@ function generatePlatform() {
             lastY = lastPlatform.y; // Y position remains the same
         } else {
             lastX = lastPlatform.x; // X position remains the same
-            lastY = lastPlatform.movingForward ? lastPlatform.range.end : lastPlatform.range.start;
+            lastY = lastPlatform.range.end;
         }
     } else {
-        lastX = lastPlatform.x + lastPlatform.width;
+        lastX = lastPlatform.x + lastPlatform.width; // For normal platforms
         lastY = lastPlatform.y;
     }
 
     // Minimum and maximum platform width
     const minPlatformWidth = 50; 
     const maxPlatformWidth = 200; 
-    const minDeltaX = 80; 
+    const minDeltaX = 80; // Minimum gap between platforms
+    
+    // Adjust minDeltaY based on whether the last platform is a moving platform
+    const minDeltaY = lastPlatform instanceof MovingPlatform ? -100 : -300; // Example: less vertical space for moving platforms
 
     // Random height offset for the next platform
     let deltaY = Math.floor(Math.random() * 401) - 200;
     deltaY = Math.min(MAX_JUMP_HEIGHT, deltaY);
-
+    deltaY = Math.max(minDeltaY, deltaY);
     // Calculate max horizontal distance based on deltaY
     const maxDeltaX = calculateMaxHorizontalDistance(deltaY);
 
     // Calculate the horizontal distance while considering minDeltaX
-    let deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
+    const deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
 
-    // Ensure there’s a gap between platforms
-    if (lastPlatform instanceof MovingPlatform && lastPlatform.direction === "horizontal") {
-        // Adjust lastX to be at least minDeltaX away from the last platform's end position
-        lastX = Math.max(lastX, lastPlatform.range.end + minDeltaX);
-    }
+    // Set the starting position for the new platform
+    lastX += minDeltaX; // Ensure new platform starts after the last one
 
     // Determine whether to create a normal or moving platform
     const createMovingPlatform = Math.random() < 0.3; // 30% chance for a moving platform
@@ -277,44 +326,46 @@ function generatePlatform() {
         const direction = Math.random() < 0.5 ? "horizontal" : "vertical"; // Random direction
         const range = {
             start: lastX,
-            end: lastX + (direction === "horizontal" ? Math.random() * 100 + 50 : 0)
+            end: lastX + (Math.random() * 100 + 50)
         };
-        newPlatform = new MovingPlatform(
-            lastX, 
-            lastY, 
-            Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth, 
-            20, 
-            './textures/grass.png', 
-            48, 
-            speed, 
-            direction, 
-            range
-        );
+
+        // Create the moving platform
+        newPlatform = new MovingPlatform(lastX, lastY, Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth, 50, './textures/grass.png', 48, speed, direction, range);
     } else {
         // Create a normal platform
         const platformWidth = Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth;
-        newPlatform = new Platform(lastX, lastY - deltaY, platformWidth); // Place normal platform
+        newPlatform = new Platform(lastX, lastY - deltaY, platformWidth);
     }
 
-    // Add the new platform to the platforms array
-    platforms.push(newPlatform);
-    FALL_THRESHOLD = newPlatform.y + 5000; // Update FALL_THRESHOLD
+    // Check if the path is clear before adding
+    if (isPathClear(newPlatform)) {
+        // Add the new platform to the platforms array
+        platforms.push(newPlatform);
+        player.updateClosestPlatform();
+    } else {
+        generatePlatform(); // Retry generating a platform if the path is not clear
+    }
 }
-
-
-
 
 
 class MovingPlatform extends Platform {
     constructor(x, y, width, height, tileSrc, tileSize, speed, direction, range) {
-        super(x, y, width, height, tileSrc, tileSize,);
+        super(x, y, width, height, tileSrc, tileSize);
         this.speed = speed || 0; // Movement speed for moving platforms
         this.direction = direction || "horizontal"; // Movement direction
         this.range = range || { start: x, end: x }; // Movement range
         this.movingForward = true; // Movement state
+        this.activeCollider = true; // Flag for active collider
     }
-
+    updateCollider() {
+        // Update the collider's position
+        this.width = this.width;  // Maintain width
+        this.height = this.height; // Maintain height
+    }
     update() {
+        // Update the active state based on movement range
+        this.activeCollider = this.x >= this.range.start && this.x <= this.range.end;
+
         if (this.direction === "horizontal") {
             if (this.movingForward) {
                 this.x += this.speed;
@@ -340,8 +391,13 @@ class MovingPlatform extends Platform {
                 }
             }
         }
+
+        // Update collider position based on the platform's current position
+        this.updateCollider();
     }
 }
+
+
 
 
 
@@ -371,7 +427,6 @@ function movePlayer() {
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${parseInt(score)}`, 10, 20); 
 }
-
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     movePlayer();
@@ -395,6 +450,7 @@ function update() {
 
     player.update();
 }
+
 
 
 // Key input handlers
