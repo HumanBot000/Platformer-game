@@ -100,7 +100,9 @@ class Player {
         for (let collider of colliders) {
             // Only check for active colliders
             if (!collider.activeCollider || !this.checkCollision(collider)) continue;
-    
+            if (collider instanceof DisappearingPlatform){
+                collider.touched = true;
+            }
             const colliderTop = collider.y;
             const colliderBottom = collider.y + collider.height;
             const colliderLeft = collider.x;
@@ -116,7 +118,6 @@ class Player {
                 // Adjust player position based on moving platform
                 if (collider instanceof MovingPlatform) {
                     const platformMovement = collider.movingForward ? collider.speed : -collider.speed;
-    
                     // Adjust player's position only when grounded
                     if (this.grounded) {
                         if (collider.direction === "vertical") {
@@ -187,10 +188,7 @@ class Player {
     }
 
     respawn() {
-        this.x = spawn.x;
-        this.y = spawn.y;
-        this.dy = 0;
-        FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
+        window.location.reload();
     }
 }
 
@@ -209,6 +207,12 @@ class Collider {
             player.y < this.y + this.height &&
             player.y + player.height > this.y
         );
+    }
+    updateCollider(x,y,witdh,height){
+        this.x=x;
+        this.y=y;
+        this.width=witdh;
+        this.height=height;
     }
 }
 
@@ -231,6 +235,37 @@ class Platform extends Collider {
         for (let i = 0; i < numTiles; i++) {
             ctx.drawImage(this.tile, this.x - cameraOffsetX + i * this.tileSize, this.y - cameraOffsetY, this.tileSize, this.tileSize);
         }
+    }
+}
+class DisappearingPlatform extends Platform {
+    constructor(x, y, width, height, duration = 200, touched = false) {
+        super(x, y, width, height, './textures/scaffold1.png');
+        this.duration = duration;
+        this.visible = true;
+        this.touched = touched;
+        this.activeCollider = true; 
+        this.timer = 0;
+    }
+
+    update() {
+        if (!this.touched || !this.visible) return;  
+        if (this.touched) this.timer += 1;
+        if (this.timer ==  this.duration){
+            this.disappear();
+        }
+    }
+
+    disappear(){
+        this.visible = false;
+        this.activeCollider = false;  
+    }
+
+    draw(cameraX, cameraY) {
+        const damageLevel = Math.min(this.timer / this.duration, 1);
+        const alpha = 1 - damageLevel;
+        ctx.globalAlpha = alpha;
+        if (this.visible) super.draw(cameraX, cameraY);
+        ctx.globalAlpha = 1;
     }
 }
 
@@ -324,14 +359,38 @@ function generatePlatform() {
         // Create a moving platform with random parameters
         const speed = Math.random() * 2 + 1; // Random speed between 1 and 3
         const direction = Math.random() < 0.5 ? "horizontal" : "vertical"; // Random direction
-        const range = {
-            start: lastX,
-            end: lastX + (Math.random() * 100 + 50)
-        };
-
+        
+        let range; // Declare range variable outside of the blocks
+    
+        if (direction === "horizontal") {
+            range = {
+                start: lastX,
+                end: lastX + (Math.random() * 100 + 50)
+            };
+        } else {
+            range = {
+                start: lastY - deltaY,
+                end: lastY - deltaY + (Math.random() * 100 + 50)
+            };
+        }
+    
         // Create the moving platform
-        newPlatform = new MovingPlatform(lastX, lastY, Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth, 50, './textures/grass.png', 48, speed, direction, range);
-    } else {
+        newPlatform = new MovingPlatform(
+            lastX,
+            lastY - deltaY,
+            Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth,
+            50,
+            './textures/grass.png',
+            48,
+            speed,
+            direction,
+            range
+        );
+    }
+    else if (Math.random() < 0.3){
+        newPlatform = new DisappearingPlatform(lastX, lastY - deltaY, 100, 20);
+    } 
+    else {
         // Create a normal platform
         const platformWidth = Math.floor(Math.random() * (maxPlatformWidth - minPlatformWidth + 1)) + minPlatformWidth;
         newPlatform = new Platform(lastX, lastY - deltaY, platformWidth);
@@ -357,16 +416,10 @@ class MovingPlatform extends Platform {
         this.movingForward = true; // Movement state
         this.activeCollider = true; // Flag for active collider
     }
-    updateCollider() {
-        // Update the collider's position
-        this.width = this.width;  // Maintain width
-        this.height = this.height; // Maintain height
-    }
     update() {
         // Update the active state based on movement range
-        this.activeCollider = this.x >= this.range.start && this.x <= this.range.end;
-
         if (this.direction === "horizontal") {
+            this.activeCollider = this.x >= this.range.start && this.x <= this.range.end;
             if (this.movingForward) {
                 this.x += this.speed;
                 if (this.x >= this.range.end) {
@@ -379,6 +432,7 @@ class MovingPlatform extends Platform {
                 }
             }
         } else if (this.direction === "vertical") {
+            this.activeCollider = this.y >= this.range.start && this.y <= this.range.end;
             if (this.movingForward) {
                 this.y += this.speed;
                 if (this.y >= this.range.end) {
@@ -393,7 +447,7 @@ class MovingPlatform extends Platform {
         }
 
         // Update collider position based on the platform's current position
-        this.updateCollider();
+        super.updateCollider(this.x,this.y,this.width,this.height);
     }
 }
 
@@ -442,7 +496,7 @@ function update() {
 
     // Update and draw all platforms
     platforms.forEach(platform => {
-        if (platform instanceof MovingPlatform) {
+        if (platform instanceof MovingPlatform || platform instanceof DisappearingPlatform) {
             platform.update(); // Update moving platforms
         }
         platform.draw(camera.x, camera.y); // Draw all platforms
