@@ -10,6 +10,7 @@ const spawn = { x: 0, y: 220 };
 const keys = {};
 let FALL_THRESHOLD = canvas.height + 50; // Threshold for respawn
 let score = 0;
+let umbrellas = []; 
 // Constants for jump limits
 let MAX_JUMP_HEIGHT = 138;
 function calculateMaxHorizontalDistance(deltaY) {
@@ -54,6 +55,8 @@ class Player {
         this.texture = new Image();
         this.texture.src = textureSrc;
         this.moved = moved;
+        this.gravityTimer = 0;
+        this.hasUmbrella = false;
     }
 
     updateClosestPlatform() {
@@ -144,13 +147,25 @@ class Player {
                 }
             }
         }
-    
+        umbrellas.forEach((umbrella, index) => {
+            if (umbrella.active && this.checkCollision(umbrella)) {
+                umbrella.collect();
+                umbrellas.splice(index, 1);
+            }
+        });
         // Draw player
         if (this.texture && this.texture.complete) {
             ctx.drawImage(this.texture, this.x - camera.x, this.y - camera.y, this.width, this.height);
         } else {
             ctx.fillStyle = '#FF0000'; // Fallback color if texture is not loaded
             ctx.fillRect(this.x - camera.x, this.y - camera.y, this.width, this.height);
+        }
+        if (this.hasUmbrella) {
+            const umbrellaIMG = new Image();
+            umbrellaIMG.src="./textures/umbrella.png";
+            const umbrellaX = this.x + (this.width / 2) - 10; // Center umbrella on the player
+            const umbrellaY = this.y - 30; // Position it above the player's head
+            ctx.drawImage(umbrellaIMG, umbrellaX - camera.x, umbrellaY - camera.y, umbrellas[0].width, umbrellas[0].height);
         }
     }
     
@@ -269,22 +284,9 @@ class DisappearingPlatform extends Platform {
 }
 
 
-// Camera Class
-class Camera {
-    constructor() {
-        this.x = 0;
-        this.y = 0;
-    }
 
-    update(player, canvasWidth, canvasHeight) {
-        this.x = player.x - canvasWidth / 2 + player.width / 2;
-        this.y = player.y - canvasHeight / 2 + player.height / 2;
-    }
-}
 function isPathClear(newPlatform) {
-    const buffer = 50; // Buffer space above the platform
-
-    // Define the area of the new platform including the buffer
+    const buffer = 50; 
     const newPlatformArea = {
         x: newPlatform.x,
         y: newPlatform.y - buffer,
@@ -377,8 +379,6 @@ function generatePlatform() {
     const minPlatformWidth = 50; 
     const maxPlatformWidth = 200; 
     const minDeltaX = 80; // Minimum gap between platforms
-    
-    // Adjust minDeltaY based on whether the last platform is a moving platform
     const minDeltaY = -300; // Example: less vertical space for moving platforms
 
     // Random height offset for the next platform
@@ -391,9 +391,10 @@ function generatePlatform() {
 
     // Ensure the deltaX is at least minDeltaX
     deltaX = Math.max(minDeltaX, Math.random() * maxDeltaX);
-    if (lastPlatform instanceof MovingPlatform){
+    if (lastPlatform instanceof MovingPlatform) {
         deltaX += lastPlatform.width;
     }
+
     // Set the starting position for the new platform, ensuring it respects minDeltaX
     lastX += deltaX; // Ensure new platform starts after the last one
 
@@ -405,9 +406,8 @@ function generatePlatform() {
         // Create a moving platform with random parameters
         const speed = Math.random() * 2 + 1; // Random speed between 1 and 3
         const direction = Math.random() < 0.5 ? "horizontal" : "vertical"; // Random direction
-        
         let range; // Declare range variable outside of the blocks
-    
+
         if (direction === "horizontal") {
             range = {
                 start: lastX,
@@ -442,11 +442,110 @@ function generatePlatform() {
     if (isPathClear(newPlatform)) {
         // Add the new platform to the platforms array
         platforms.push(newPlatform);
+        
+        // Randomly spawn an umbrella on the platform (10% chance)
+        if (Math.random() < 0.9) {
+            const umbrellaX = newPlatform.x + (newPlatform.width / 2) - 10; // Center umbrella on platform
+            const umbrellaY = newPlatform.y - 20; // Place umbrella slightly above the platform
+            const umbrella = new Umbrella(umbrellaX, umbrellaY);
+            umbrellas.push(umbrella); // Add umbrella to the umbrellas array
+        }
+
         player.updateClosestPlatform();
     } else {
         generatePlatform(); // Retry generating a platform if the path is not clear
     }
 }
+
+
+class Camera {
+    constructor() {
+        this.x = 0;
+        this.y = 0;
+        this.baseFOV = 1; 
+        this.targetFOV = 1; // Add a target FOV for smooth transitions
+        this.fovTransitionSpeed = 0.01; // Adjust this value for speed of transition
+    }
+
+    update(player, canvasWidth, canvasHeight) {
+        this.x = player.x - (canvasWidth / 2) / this.baseFOV;
+        this.y = player.y - (canvasHeight / 2);
+        
+        // Smoothly transition the base FOV to the target FOV
+        if (this.baseFOV < this.targetFOV) {
+            this.baseFOV += this.fovTransitionSpeed; // Increment towards the target
+            if (this.baseFOV > this.targetFOV) {
+                this.baseFOV = this.targetFOV; // Clamp to target
+            }
+        } else if (this.baseFOV > this.targetFOV) {
+            this.baseFOV -= this.fovTransitionSpeed; // Decrement towards the target
+            if (this.baseFOV < this.targetFOV) {
+                this.baseFOV = this.targetFOV; // Clamp to target
+            }
+        }
+    }
+
+    // Set a new target FOV to transition to
+    setFOV(targetFOV) {
+        this.targetFOV = targetFOV;
+    }
+}
+
+let umbrellaTimeouts = [];
+class Umbrella {
+    constructor(x, y, width = 20, height = 20, textureSrc = './textures/umbrella.png') {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.texture = new Image();
+        this.texture.src = textureSrc;
+        this.active = true;
+    }
+
+    draw(cameraX, cameraY) {
+        if (this.texture && this.texture.complete) {
+            ctx.drawImage(this.texture, this.x - cameraX, this.y - cameraY, this.width, this.height);
+        } else {
+            ctx.fillStyle = 'blue'; 
+            ctx.fillRect(this.x - cameraX, this.y - cameraY, this.width, this.height);
+        }
+    }
+
+    collect() {
+        if (!player.hasUmbrella){
+            this.active = false; 
+            player.gravity = 0.25; 
+            camera.setFOV(1.5);
+            player.hasUmbrella = true;
+            umbrellaTimeouts.push(setTimeout(() => {
+                player.gravity = 0.5; 
+                player.hasUmbrella = false;
+                camera.setFOV(1);
+                this.active = false
+            }, 5000)); 
+        }
+        else{
+            for (var i=0; i<umbrellaTimeouts.length; i++) {
+                clearTimeout(umbrellaTimeouts[i]);
+                umbrellaTimeouts.splice(i,1);
+              }
+            this.active = true; 
+            player.gravity = 0.25; 
+            camera.setFOV(1.5);
+            player.hasUmbrella = true;
+            umbrellaTimeouts.push(setTimeout(() => {
+                player.gravity = 0.5; 
+                player.hasUmbrella = false;
+                camera.setFOV(1);
+                this.active = false
+            }, 5000)); 
+        }
+
+    }
+}
+
+
 
 
 
@@ -557,6 +656,9 @@ function update() {
         }
         platform.draw(camera.x, camera.y); // Draw all platforms
     });
+    umbrellas.forEach(
+        umbrella => {umbrella.draw(camera.x,camera.y)}
+    );
 
     player.update();
     wall.draw(camera,player);
