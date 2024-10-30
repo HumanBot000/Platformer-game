@@ -165,7 +165,7 @@ class Player {
             umbrellaIMG.src="./textures/umbrella.png";
             const umbrellaX = this.x + (this.width / 2) - 10; // Center umbrella on the player
             const umbrellaY = this.y - 30; // Position it above the player's head
-            ctx.drawImage(umbrellaIMG, umbrellaX - camera.x, umbrellaY - camera.y, umbrellas[0].width, umbrellas[0].height);
+            ctx.drawImage(umbrellaIMG, umbrellaX - camera.x, umbrellaY - camera.y, 20, 20);
         }
     }
     
@@ -471,7 +471,7 @@ class Camera {
 
     update(player, canvasWidth, canvasHeight) {
         this.x = player.x - (canvasWidth / 2) / this.baseFOV;
-        this.y = player.y - (canvasHeight / 2);
+        this.y = player.y - (canvasHeight / 2) / this.baseFOV;
         
         // Smoothly transition the base FOV to the target FOV
         if (this.baseFOV < this.targetFOV) {
