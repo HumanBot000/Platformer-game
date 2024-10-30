@@ -201,8 +201,10 @@ class Player {
     }
 
     respawn() {
-        wall.x = 0;
-        window.location.reload();
+        wall.x = -50;
+        player.y = spawn.y;
+        player.x = spawn.x;
+        window.location.replace('./index.html');
     }
 }
 
@@ -444,7 +446,7 @@ function generatePlatform() {
         platforms.push(newPlatform);
         
         // Randomly spawn an umbrella on the platform (10% chance)
-        if (Math.random() < 0.9) {
+        if (Math.random() < 0.1) {
             const umbrellaX = newPlatform.x + (newPlatform.width / 2) - 10; // Center umbrella on platform
             const umbrellaY = newPlatform.y - 20; // Place umbrella slightly above the platform
             const umbrella = new Umbrella(umbrellaX, umbrellaY);
