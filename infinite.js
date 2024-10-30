@@ -41,7 +41,7 @@ function calculateMaxHorizontalDistance(deltaY) {
 
 
 class Player {
-    constructor(x, y, width = 30, height = 30, textureSrc = './textures/player.png') {
+    constructor(x, y, width = 30, height = 30, textureSrc = './textures/player.png',moved=false) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -53,6 +53,7 @@ class Player {
         this.grounded = false;
         this.texture = new Image();
         this.texture.src = textureSrc;
+        this.moved = moved;
     }
 
     updateClosestPlatform() {
@@ -109,7 +110,6 @@ class Player {
     
             // Handle vertical collisions
             if (playerBottom <= colliderBottom && playerBottom + this.dy >= colliderTop) {
-                console.log("up")
                 // Colliding from above
                 this.y = colliderTop - this.height; // Place player on top of the collider
                 this.dy = 0; // Reset vertical speed
@@ -128,7 +128,6 @@ class Player {
                     }
                 }
             } else if (playerTop < colliderBottom && playerTop + this.dy <= colliderBottom) {
-                console.log("down")
                 // Colliding from below (if necessary)
                 this.y = colliderBottom; 
                 this.dy = 0; 
@@ -137,11 +136,9 @@ class Player {
                 const isCollidingFromLeft = playerRight > colliderLeft && playerLeft < colliderLeft && playerBottom > colliderTop && playerTop < colliderBottom;
                 const isCollidingFromRight = playerLeft < colliderRight && playerRight > colliderRight && playerBottom > colliderTop && playerTop < colliderBottom;
                 if (isCollidingFromLeft) {
-                    console.log("left")
                     this.x = colliderLeft - this.width; 
                     this.dy = 0; 
                 } else if (isCollidingFromRight) {
-                    console.log("right")
                     this.x = colliderRight; 
                     this.dy = 0; 
                 }
@@ -189,6 +186,7 @@ class Player {
     }
 
     respawn() {
+        wall.x = 0;
         window.location.reload();
     }
 }
@@ -311,6 +309,50 @@ function isPathClear(newPlatform) {
     return true;
 }
 
+class HuntingWall {
+    constructor(x, y, width = 50, height = 400, speed = 1) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.active = false; // Initially inactive
+        this.timer = 0; // Timer to track the delay before starting
+        this.speed = speed; // Speed at which the wall moves
+        this.opacity = 0.7; // Opacity of the wall
+    }
+
+    update(player) {
+        if (this.active && player.moved) {
+            this.x += this.speed; 
+            // Check for collision with the player
+            if (this.checkCollision(player)) {
+                player.respawn(); // Call respawn if colliding
+            }
+        } else {
+            // Increment timer until it reaches 3 seconds
+            this.timer += 1 / 60; // Assume 60 FPS
+            if (this.timer >= 3) {
+                this.active = true; // Activate the wall after 3 seconds
+            }
+        }
+    }
+
+    checkCollision(player) {
+        return (
+            player.x <= this.x
+        );
+    }
+
+    draw(camera) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${this.opacity})`; // Set color with opacity
+        let wallWidth = this.x - camera.x;
+        if (wallWidth > 0) {
+            ctx.fillRect(0, 0, wallWidth, canvas.height);
+        }
+    }
+}
+
+    
 
 function generatePlatform() {
     const lastPlatform = platforms[platforms.length - 1];
@@ -456,10 +498,12 @@ class MovingPlatform extends Platform {
 
 
 
-// Initialize Game
+let wall;
+
 function init() {
     player = new Player(spawn.x, spawn.y);
     camera = new Camera();
+    wall = new HuntingWall(-50, 0); // Initialize the wall off-screen to the left
 
     // Initialize with the spawn platform
     platforms.push(new Platform(spawn.x, spawn.y + 100, 200)); // Starting platform at a fixed height and width of 200
@@ -471,17 +515,28 @@ function init() {
     gameLoop();
 }
 
+
 // Move Player based on key inputs
 function movePlayer() {
-    if (keys['ArrowRight'] || keys["KeyD"]) player.x += player.speed;
-    if (keys['ArrowLeft'] || keys["KeyA"]) player.x -= player.speed;
+    if (keys['ArrowRight'] || keys["KeyD"]) {
+        player.x += player.speed;    
+        player.moved = true;
+        
+    }
+    if (keys['ArrowLeft'] || keys["KeyA"]) {
+        player.x -= player.speed;
+        player.moved = true;
+    }
     player.x = Math.max(0, player.x); // Prevent leaving the canvas
     score = player.x /100;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'black';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${parseInt(score)}`, 10, 20); 
+    const lead = parseInt(player.x - wall.x);
+    ctx.fillText(`Lead: ${lead > 999 ? '999+' : lead}`, canvas.width - 100, 20);
 }
+
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     movePlayer();
@@ -504,7 +559,11 @@ function update() {
     });
 
     player.update();
+    wall.draw(camera,player);
+    wall.update(player);
+    wall.speed+=0.2**4;
 }
+
 
 
 

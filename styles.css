@@ -1,38 +1,95 @@
 body {
     margin: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #87CEEB;
+    background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+a {
+    text-decoration: none;
+}
+
+.container {
+    display: block;
+    height: auto;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s;
+    width: 300px;
+    margin-bottom: 20px;
+}
+
+.container:hover {
+    transform: scale(1.05);
+}
+
+h2 {
+    color: #555;
+    margin: 10px 0;
+}
+
+.gamemodeSelector {
+    cursor: pointer;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #FFD700;
+    transition: background-color 0.3s;
+}
+
+#infinite {
+    background-color: violet;
+}
+#infinite:hover{
+    background-color: rgb(223, 79, 223);
+}
+.gamemodeSelector:hover {
+    background-color: #FFC107;
+}
+
+.gamemode-icon {
+    width: 50px;
+    height: auto;
+    margin-top: 10px;
 }
 
 canvas {
-    border: 1px solid #000; /* Rahmen um das Canvas */
-    background: #87CEEB; /* Hintergrundfarbe */
+    border: 1px solid #000;
+    background: #87CEEB;
 }
-
 
 #controls {
     position: absolute;
-    bottom: 70px; /* Adjust based on your layout */
-    left: 10px; /* Align to the left */
-    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
-    padding: 30px; /* Spacing inside the box */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow for depth */
-    width: 120px; /* Fixed width for the controls */
+    bottom: 70px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    width: 120px;
 }
 
-/* Keybind Styles */
-.keybind,.icon {
+.keybind, .icon {
     display: flex;
-    align-items: center; /* Center icons and text vertically */
-    margin: 5px 0; /* Space between keybinds */
+    align-items: center;
+    margin: 5px 0;
 }
 
 .key-icon, .icon-icon {
-    width: 30px; /* Set icon size */
-    height: 30px; /* Set icon size */
-    margin-right: 5px; /* Space between icon and text */
+    width: 30px;
+    height: 30px;
+    margin-right: 5px;
 }

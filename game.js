@@ -16,7 +16,7 @@ let lavaRising = false;
 let lavaSpeed = 0;
 let lavaTexture = new Image();
 let endX = 10**10**10;
-let currentLevel = "testing"
+let currentLevel = "gpt"
 let highScore = parseFloat(localStorage.getItem(`highScore${currentLevel}`)) || 50000;
 // Key status
 const keys = {};

@@ -1,40 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2D Platformer Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <canvas id="gameCanvas" width="1200" height="800"></canvas>
-    <div id="controls">
-        <div class="keybind">
-            <img src="imgs/keyboard_key_d.png" alt="D Key" class="key-icon">
-            <img src="imgs/arrow-right.png" alt="Arrow Right" class="key-icon">
-            <span>Move Right</span>
-        </div>
-        <div class="keybind">
-            <img src="imgs/keyboard_key_a.png" alt="A Key" class="key-icon">
-            <img src="imgs/arrow-left.png" alt="Arrow Left" class="key-icon">
-            <span>Move Left</span>
-        </div>
-        <div class="keybind">
-            <img src="imgs/keyboard_key_space.png" alt="Spacebar" class="key-icon">
-            <img src="imgs/arrow-up.png" alt="Arrow Up" class="key-icon">
-            <span>Jump</span>
-        </div>
-        <div class="icon">
-            <img src="textures/checkpoint-touched.png" alt="Checkpoint Touched" class="icon-icon">
-            <img src="textures/checkpoint-untouched.png" alt="Checkpoint Untouched" class="icon-icon">
-            <span>Checkpoint</span>
-        </div>
-        <div class="icon">
-            <img src="textures/speed-boost.png" alt="Speed Bost" class="icon-icon">
-            <img src="textures/jump-boost.png" alt="Jump Boost" class="icon-icon">
-            <span>Items</span>
-        </div>
+    <h1>Please select your Game Mode</h1>
+    <div class="container">
+        <a href="./level.html">
+            <div class="gamemodeSelector" id="levels">
+                <h2>Levels</h2>
+                <img src="imgs/icons8-schatzkarte-40.png" alt="Level Icon" class="gamemode-icon">
+            </div>
+        </a>
     </div>
-    <script src="infinite.js"></script>
+    <div class="container">
+    <a href="./infinity.html">
+        <div class="gamemodeSelector" id="infinite">
+            <h2>Inifinite Generation</h2>
+            <img src="imgs/icons8-unendlichkeit-50.png" alt="Infinity Icon" class="gamemode-icon">
+        </div>
+    </a>
+    </div>
 </body>
+
 </html>
